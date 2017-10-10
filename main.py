@@ -5,8 +5,8 @@ classifiers = machine_learning_classifiers()
 
 #to run keras model
 
-classifiers.parse_dataset('dogscats/train', 'jpg', 'dogscats_x_train_preprocessed_vgg', 'dogscats_y_train_preprocessed_vgg',224,'keras')
-classifiers.parse_dataset('dogscats/valid','jpg', 'dogscats_x_valid_preprocessed_vgg', 'dogscats_y_valid_preprocessed_vgg',224, 'keras')
+classifiers.parse_dataset('dogscats/train', 'jpg', 'dogscats_x_train_preprocessed', 'dogscats_y_train_preprocessed',224,'keras')
+classifiers.parse_dataset('dogscats/valid','jpg', 'dogscats_x_valid_preprocessed', 'dogscats_y_valid_preprocessed',224, 'keras')
 classifiers.load_dataset('dogscats_x_train_preprocessed.npy', 'dogscats_y_train_preprocessed.npy', 'dogscats_x_valid_preprocessed.npy', 'dogscats_y_valid_preprocessed.npy')
 classifiers.DeepModel(30,'dogscats_deepmodel_preprocessed.h5')
 

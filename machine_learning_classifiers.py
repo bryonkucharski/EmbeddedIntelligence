@@ -91,19 +91,6 @@ class machine_learning_classifiers:
         acc = model.score(self.x_valid, self.y_valid)
         print("Random Forest Accuracy: {:.2f}%".format(acc * 100))
 
-    def PreprocessedDeepModel(self, epochs, modelName):
-        print('before: \n' , self.x_train[0])
-        self.x_train = utils.vgg_preprocess(self.x_train)
-        self.x_valid = utils.vgg_preprocess(self.x_valid)
-        print('after: \n' , self.x_train[0])  
-        self.model = utils.Keras_Website_Model(2, 224)
-        #self.y_train = utils.one_hot(self.y_train) 
-        #self.y_valid = utils.one_hot(self.y_valid)
-        self.model.fit(self.x_train, self.y_train, validation_data = (self.x_valid, self.y_valid), epochs=epochs, batch_size=200, verbose=2)
-        scores = self.model.evaluate(self.x_valid, self.y_valid, verbose=0)
-        self.model.save_weights(modelName)
-        print("Baseline Error: %.2f%%" % (100-scores[1]*100))
-
     def showImage(self,img):
         utils.showImage(img)
     
