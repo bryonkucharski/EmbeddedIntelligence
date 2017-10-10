@@ -23,8 +23,9 @@ K.set_image_dim_ordering('tf')
 import numpy as np
 import matplotlib
 from matplotlib import pyplot
+from sklearn.svm import LinearSVC
 
-modelType = 'large_CNN'
+modelType = 'basic'
 seed = 7
 np.random.seed(seed)
 
@@ -50,9 +51,10 @@ print('x_train',x_train.shape)
 print('x_test',x_test.shape)
 
 # one hot encode outputs
-y_train = np_utils.to_categorical(y_train)
-y_test = np_utils.to_categorical(y_test)
-num_classes = y_test.shape[1]
+#y_train = np_utils.to_categorical(y_train)
+#y_test = np_utils.to_categorical(y_test)
+#num_classes = y_test.shape[1]
+num_classes = len(y_test)
 
 def basic_deepModel():
     model = Sequential()
@@ -99,9 +101,14 @@ elif(modelType == 'large_CNN'):
 
 
 
-model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=10, batch_size=200, verbose=2)
+'''model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=10, batch_size=200, verbose=2)
 scores = model.evaluate(x_test, y_test, verbose=0)
 print("Baseline Error: %.2f%%" % (100-scores[1]*100))
+'''
+
+svm = LinearSVC()
+svm.fit(x_train, y_train)
+print(svm.score(x_train, y_train))
 
 
 
