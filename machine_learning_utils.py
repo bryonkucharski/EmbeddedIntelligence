@@ -28,7 +28,9 @@ from matplotlib import pyplot
 
 #from fast.ai course
 vgg_mean = np.array([123.68, 116.779, 103.939]).reshape((3,1,1))
-bryon_mean = np.array([124.57197905557038, 116.11287913542041, 106.35763620472282]).reshape((3,1,1))
+calculated_mean = np.array([124.57197905557038, 116.11287913542041, 106.35763620472282]).reshape((3,1,1))
+calculated_std = np.array([ 29.61407124, 28.21495712, 29.42529447])
+
 def resize_img(img, IMG_SIZE):
     '''
     resizes the images to a standard size
@@ -47,14 +49,14 @@ def preprocess_img_keras(img, IMG_SIZE):
     '''
     resizes the images to a standard size and rearranges the array dimensions
     '''
-    # rescale to standard size
-    #img = img / 255
 
     img = resize_img(img, IMG_SIZE)
     # roll color axis to axis 0
     img = roll_image(img)
 
-    img = np.divide(np.subtract(img,np.mean(img)),np.std(img))
+    img[0,:,:] = np.divide(np.subtract(img[0,:,:],calculated_mean[0]),calculated_std[0])
+    img[1,:,:] = np.divide(np.subtract(img[1,:,:],calculated_mean[1]),calculated_std[1])
+    img[2,:,:] = np.divide(np.subtract(img[2,:,:],calculated_mean[2]),calculated_std[2])
 
     return img
 
@@ -74,24 +76,35 @@ def preprocess_img_scikit(img, IMG_SIZE):
     #img = preprocess_img_keras(img, IMG_SIZE)
     return img
 
-def get_mean(path, extension):
+def get_metrics(path, extension, IMG_SIZE):
+    '''
+    returns mean, std of an image dataset
+    '''
     mean = [0,0,0]
+    M2 = [0,0,0]
+
     paths =  glob.glob(os.path.join(path, '*.*.' + extension)) #contains all cats and all dog images
-    for i , path in enumerate(paths): 
+    i = 0
+    for path in paths: 
         img = io.imread(path)
-        img = resize_img(img,224)
-        mean[0] = calculate_mean(img, 0, mean[0],i+1 )
-        mean[1] = calculate_mean(img, 1, mean[1],i+1 )
-        mean[2] = calculate_mean(img, 2, mean[2],i+1 )
+        img = resize_img(img,IMG_SIZE)
+        mean[0], M2[0] = calculate_metrics(img, 0, mean[0], M2[0],i+1 )
+        mean[1], M2[1] = calculate_metrics(img, 1, mean[1], M2[1],i+1 )
+        mean[2], M2[2] = calculate_metrics(img, 2, mean[2], M2[2],i+1 )
 
         if i % 100 == 0:
-            print(i, 'Mean: ', mean)
+            print(i, 'Mean: ', mean, 'M2: ', M2)
 
-    return mean
+        i = i + 1
+   
+    var = np.divide(M2,i-1)
+    std = np.sqrt(var)
 
-def calculate_mean(img, index, old_mean, n):
+    return mean, std
+
+def calculate_metrics(img, index, old_mean,old_M2, n):
     '''
-    Calculate the running mean of an image
+    Welfords Algorithm to find variance and mean in one iteraton of each dimension of an image 
 
     img is in the format IMG_SIZE, IMG_SIZE, 3
     index - 0, 1, or 2 for R, G, B
@@ -100,7 +113,9 @@ def calculate_mean(img, index, old_mean, n):
     x = np.mean(img[:,:,index]) #returns the mean of the current image in the dimension specificed by index
     delta = x - old_mean
     new_mean = old_mean + (delta/n)
-    return new_mean
+    delta2 = x - new_mean
+    new_M2 = old_M2 + (delta*delta2)
+    return new_mean, new_M2
 
 def getLabel(path):
     '''
@@ -254,5 +269,4 @@ def showImage(img):
     pyplot.imshow(img)
     pyplot.show()
 
-mean = get_mean(r'C:\Users\kucharskib\OneDrive\Documents\Wentworth\Research\Fall 2018 Research Co-op\Embedded Intelligence\keras\Cats vs Dogs\dogscats_v2/train','jpg')
-print(mean)
+print(calculated_mean[0])
