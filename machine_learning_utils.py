@@ -70,7 +70,12 @@ def preprocess_img_scikit(img, IMG_SIZE):
     
     #img = transform.resize(img,(1,IMG_SIZE*IMG_SIZE*3),mode = 'constant')
     img = resize_img(img, IMG_SIZE)
-    img = np.divide(np.subtract(img,np.mean(img)),np.std(img))
+    
+    img[:,:,0] = np.divide(np.subtract(img[:,:,0],calculated_mean[0]),calculated_std[0])
+    img[:,:,1] = np.divide(np.subtract(img[:,:,1],calculated_mean[1]),calculated_std[1])
+    img[:,:,2] = np.divide(np.subtract(img[:,:,2],calculated_mean[2]),calculated_std[2])
+
+
     img = img.reshape(IMG_SIZE*IMG_SIZE*3).astype('float32')
   
     #img = preprocess_img_keras(img, IMG_SIZE)
