@@ -24,16 +24,17 @@ K.set_image_data_format('channels_first')
 import matplotlib
 from matplotlib import pyplot
 
+#https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+
 #from fast.ai course
 vgg_mean = np.array([123.68, 116.779, 103.939]).reshape((3,1,1))
-
+bryon_mean = np.array([124.57197905557038, 116.11287913542041, 106.35763620472282]).reshape((3,1,1))
 def resize_img(img, IMG_SIZE):
     '''
     resizes the images to a standard size
     '''
-
     # rescale to standard size
-    img = transform.resize(img, (IMG_SIZE, IMG_SIZE), mode='constant')
+    img = transform.resize(img, (IMG_SIZE, IMG_SIZE), mode='constant', preserve_range=True)
 
     return img
 
@@ -72,6 +73,34 @@ def preprocess_img_scikit(img, IMG_SIZE):
   
     #img = preprocess_img_keras(img, IMG_SIZE)
     return img
+
+def get_mean(path, extension):
+    mean = [0,0,0]
+    paths =  glob.glob(os.path.join(path, '*.*.' + extension)) #contains all cats and all dog images
+    for i , path in enumerate(paths): 
+        img = io.imread(path)
+        img = resize_img(img,224)
+        mean[0] = calculate_mean(img, 0, mean[0],i+1 )
+        mean[1] = calculate_mean(img, 1, mean[1],i+1 )
+        mean[2] = calculate_mean(img, 2, mean[2],i+1 )
+
+        if i % 100 == 0:
+            print(i, 'Mean: ', mean)
+
+    return mean
+
+def calculate_mean(img, index, old_mean, n):
+    '''
+    Calculate the running mean of an image
+
+    img is in the format IMG_SIZE, IMG_SIZE, 3
+    index - 0, 1, or 2 for R, G, B
+
+    '''
+    x = np.mean(img[:,:,index]) #returns the mean of the current image in the dimension specificed by index
+    delta = x - old_mean
+    new_mean = old_mean + (delta/n)
+    return new_mean
 
 def getLabel(path):
     '''
@@ -221,6 +250,9 @@ def vgg_preprocess(x):
     return x
 
 def showImage(img):
-    display = np.transpose(img[0], (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
-    pyplot.imshow(display)
+    #display = np.transpose(img[0], (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
+    pyplot.imshow(img)
     pyplot.show()
+
+mean = get_mean(r'C:\Users\kucharskib\OneDrive\Documents\Wentworth\Research\Fall 2018 Research Co-op\Embedded Intelligence\keras\Cats vs Dogs\dogscats_v2/train','jpg')
+print(mean)
