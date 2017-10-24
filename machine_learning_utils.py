@@ -20,16 +20,17 @@ from keras.utils import np_utils
 from keras import backend as K
 K.set_image_dim_ordering('th')
 K.set_image_data_format('channels_first')
-
+np.set_printoptions(threshold=np.nan)
 import matplotlib
 from matplotlib import pyplot
+import matplotlib.patches as mpatches
 
 #https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
 
 #from fast.ai course
 vgg_mean = np.array([123.68, 116.779, 103.939]).reshape((3,1,1))
 calculated_mean = np.array([124.57197905557038, 116.11287913542041, 106.35763620472282]).reshape((3,1,1))
-calculated_std = np.array([ 29.61407124, 28.21495712, 29.42529447])
+calculated_std = np.array([ 29.61407124, 28.21495712, 29.42529447]).reshape((3,1,1))
 
 def resize_img(img, IMG_SIZE):
     '''
@@ -51,13 +52,22 @@ def preprocess_img_keras(img, IMG_SIZE):
     '''
 
     img = resize_img(img, IMG_SIZE)
+    print("-Image After resize-\n")
+    print("Image Shape: ", img.shape)
+    print(img)
     # roll color axis to axis 0
     img = roll_image(img)
+    print("-Image After roll-\n")
+    print("Image Shape: ", img.shape)
+    print(img)
 
     img[0,:,:] = np.divide(np.subtract(img[0,:,:],calculated_mean[0]),calculated_std[0])
     img[1,:,:] = np.divide(np.subtract(img[1,:,:],calculated_mean[1]),calculated_std[1])
     img[2,:,:] = np.divide(np.subtract(img[2,:,:],calculated_mean[2]),calculated_std[2])
 
+    print("-Image After Normalization-\nSubtratced " , calculated_mean, "\nDivided ", calculated_std)
+    print("Image Shape: ", img.shape)
+    print(img)
     return img
 
 def reshape_data(data, IMG_SIZE):
@@ -70,15 +80,21 @@ def preprocess_img_scikit(img, IMG_SIZE):
     
     #img = transform.resize(img,(1,IMG_SIZE*IMG_SIZE*3),mode = 'constant')
     img = resize_img(img, IMG_SIZE)
-    
+    print("-Image After resize-\n")
+    print("Image Shape: ", img.shape)
+    print(img)
+
     img[:,:,0] = np.divide(np.subtract(img[:,:,0],calculated_mean[0]),calculated_std[0])
     img[:,:,1] = np.divide(np.subtract(img[:,:,1],calculated_mean[1]),calculated_std[1])
     img[:,:,2] = np.divide(np.subtract(img[:,:,2],calculated_mean[2]),calculated_std[2])
-
+    print("-Image After Normalization-\nSubtracted " , calculated_mean, "\nDivided ", calculated_std)
+    print("Image Shape: ", img.shape)
+    print(img)
 
     img = img.reshape(IMG_SIZE*IMG_SIZE*3).astype('float32')
-  
-    #img = preprocess_img_keras(img, IMG_SIZE)
+    print("-Image After Reshape-\n")
+    print("Image Shape: ", img.shape)
+    print(img)
     return img
 
 def get_metrics(path, extension, IMG_SIZE):
@@ -130,10 +146,10 @@ def getLabel(path):
     print(type)
     return int(type == 'dog')
 
-def load_dataset(x_train, y_train, x_valid, y_valid):
+def load_image_dataset(x_train, y_train, x_valid, y_valid):
     
 
-    print('getting data from npy files. . .')
+    print('getting image data from npy files. . .')
 
     x_train = np.load(x_train)
     y_train = np.load(y_train)
@@ -142,26 +158,22 @@ def load_dataset(x_train, y_train, x_valid, y_valid):
       
     return x_train, y_train, x_valid, y_valid
 
-def parse_dataset(path, extension, x_name, y_name,IMG_SIZE, modelType = 'keras'):
+def get_image_dataset(path, extension, x_name, y_name,IMG_SIZE, modelType = 'keras'):
     '''
     gets the data and saves it as a numpy array
     '''
     
     print('getting data from directory. . .')
 
-    x,y = get_data(path,extension,IMG_SIZE,modelType)
-    #x_valid,y_valid = get_data(valid_path,extension, onehot)
+    x,y = parse_image_dataset(path,extension,IMG_SIZE,modelType)
 
     np.save(x_name, x)
     np.save(y_name, y)
-    #np.save(y_train_name, y_train)
-    #np.save(y_valid_name, y_valid)
 
-    print('-Data set -\nX Shape', x.shape, 'Y Length: ' , len(y))
-    #print('Validation set', x_valid.shape, y_valid.shape)
-   # return x,y
+    print('-Data set -\nX Shape', x.shape, '\nY Length: ' , len(y))
 
-def get_data(path, extension,IMG_SIZE, modelType = 'keras'):
+
+def parse_image_data(path, extension,IMG_SIZE, modelType = 'keras'):
     '''
     returns an numpy array of images for x and list of labels for y
     '''
@@ -169,8 +181,13 @@ def get_data(path, extension,IMG_SIZE, modelType = 'keras'):
     labels = []
     paths =  glob.glob(os.path.join(path, '*.*.' + extension)) #contains all cats and all dog images
     np.random.shuffle(paths) #shuffle to prevent overfitting
-    for path in paths: 
-        img = io.imread(path)
+    #for path in paths: 
+    #    img = io.imread(path)
+    for i in range(0,1):
+        img = io.imread(paths[i])
+        print("Original Image From Folder: ")
+        print("Image Shape: ", img.shape)
+        print(img)
         if modelType == 'keras':
             img = preprocess_img_keras(img, IMG_SIZE)
         elif modelType == 'scikit':
@@ -180,13 +197,49 @@ def get_data(path, extension,IMG_SIZE, modelType = 'keras'):
         labels.append(label)
         print(path, label)
         
-
-
     x = np.array(images, dtype='float32')
     y = labels
 
     return x,y
 
+def parse_vector_dataset(path):
+    with open(path, "r") as ins:
+        data = []
+        labels = []
+        for line in ins:
+
+            #get rid of new line, split by comma
+            list = line.replace('\n','').split(',')
+
+            #convert string to float
+            list = [float(x) for x in list]
+
+            #add to data excluding first entry since it's the label
+            data.append(list[1:])
+
+            #add label
+            labels.append(int(list[0]))
+
+    return np.array(data), labels
+
+def load_vector_dataset(x_name, y_name):
+    
+    print('getting vector data from npy files. . .')
+  
+    x = np.load(x_name)
+    y = np.load(y_name)
+    
+    return x, y
+    
+def get_vector_dataset(path, x_name, y_name):
+    
+    x,y = parse_vector_dataset(path)
+
+    np.save(x_name,x)
+    np.save(y_name,y)
+
+    print('-Data set -\nX Shape', x.shape, '\nY Length: ' , len(y))
+    
 def one_hot(y,NUM_CLASSES):
     '''
     turns a list into a one hot matrix
@@ -270,8 +323,25 @@ def vgg_preprocess(x):
     return x
 
 def showImage(img):
-    #display = np.transpose(img[0], (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
-    pyplot.imshow(img)
+
+    display = np.transpose(img, (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
+    z = np.copy(display).astype('uint8')
+    pyplot.imshow(z)
     pyplot.show()
 
-print(calculated_mean[0])
+def plotPCA(pca, y):
+    color = 'y'
+    for i in range(len(pca)):
+        if(y[i] == 1):
+            color = 'b'
+        elif(y[i]==2):
+            color = 'r'
+        elif(y[i] ==3):
+            color = 'g'
+        pyplot.plot(pca[i][0],pca[i][1], marker='o', ms = 5, alpha=1, color=color)
+    patches = []
+    patches.append(mpatches.Patch(color='b', label='1'))
+    patches.append(mpatches.Patch(color='r', label='2'))
+    patches.append(mpatches.Patch(color='g', label='3'))
+    pyplot.legend(handles=patches, bbox_to_anchor=(1, 1), bbox_transform=pyplot.gcf().transFigure)
+    pyplot.show()
