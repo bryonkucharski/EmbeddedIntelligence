@@ -3,6 +3,7 @@ from skimage import color, exposure, transform, io
 import numpy as np
 import pandas as pd
 import os 
+import re
 from keras.layers import Activation
 from keras.preprocessing.image import ImageDataGenerator
 from keras.datasets import mnist
@@ -18,12 +19,15 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
-K.set_image_dim_ordering('th')
+K.set_image_dim_ordering('tf')
 K.set_image_data_format('channels_first')
 np.set_printoptions(threshold=np.nan)
 import matplotlib
 from matplotlib import pyplot
 import matplotlib.patches as mpatches
+import random
+from sklearn.metrics import confusion_matrix
+import itertools
 
 #https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
 
@@ -46,28 +50,20 @@ def roll_image(img):
     img = np.rollaxis(img, -1)
     return img
 
-def preprocess_img_keras(img, IMG_SIZE):
+def preprocess_img_keras(img, IMG_SIZE, standardize = True):
     '''
     resizes the images to a standard size and rearranges the array dimensions
     '''
 
     img = resize_img(img, IMG_SIZE)
-    print("-Image After resize-\n")
-    print("Image Shape: ", img.shape)
-    print(img)
+
     # roll color axis to axis 0
     img = roll_image(img)
-    print("-Image After roll-\n")
-    print("Image Shape: ", img.shape)
-    print(img)
+    if standardize:
+        img[0,:,:] = np.divide(np.subtract(img[0,:,:],calculated_mean[0]),calculated_std[0])
+        img[1,:,:] = np.divide(np.subtract(img[1,:,:],calculated_mean[1]),calculated_std[1])
+        img[2,:,:] = np.divide(np.subtract(img[2,:,:],calculated_mean[2]),calculated_std[2])
 
-    img[0,:,:] = np.divide(np.subtract(img[0,:,:],calculated_mean[0]),calculated_std[0])
-    img[1,:,:] = np.divide(np.subtract(img[1,:,:],calculated_mean[1]),calculated_std[1])
-    img[2,:,:] = np.divide(np.subtract(img[2,:,:],calculated_mean[2]),calculated_std[2])
-
-    print("-Image After Normalization-\nSubtratced " , calculated_mean, "\nDivided ", calculated_std)
-    print("Image Shape: ", img.shape)
-    print(img)
     return img
 
 def reshape_data(data, IMG_SIZE):
@@ -76,25 +72,18 @@ def reshape_data(data, IMG_SIZE):
 
         return data
 
-def preprocess_img_scikit(img, IMG_SIZE):
+def preprocess_img_scikit(img, IMG_SIZE,standardize = True):
     
     #img = transform.resize(img,(1,IMG_SIZE*IMG_SIZE*3),mode = 'constant')
     img = resize_img(img, IMG_SIZE)
-    print("-Image After resize-\n")
-    print("Image Shape: ", img.shape)
-    print(img)
-
-    img[:,:,0] = np.divide(np.subtract(img[:,:,0],calculated_mean[0]),calculated_std[0])
-    img[:,:,1] = np.divide(np.subtract(img[:,:,1],calculated_mean[1]),calculated_std[1])
-    img[:,:,2] = np.divide(np.subtract(img[:,:,2],calculated_mean[2]),calculated_std[2])
-    print("-Image After Normalization-\nSubtracted " , calculated_mean, "\nDivided ", calculated_std)
-    print("Image Shape: ", img.shape)
-    print(img)
-
+    
+    if standardize:
+        img[:,:,0] = np.divide(np.subtract(img[:,:,0],calculated_mean[0]),calculated_std[0])
+        img[:,:,1] = np.divide(np.subtract(img[:,:,1],calculated_mean[1]),calculated_std[1])
+        img[:,:,2] = np.divide(np.subtract(img[:,:,2],calculated_mean[2]),calculated_std[2])
+    
     img = img.reshape(IMG_SIZE*IMG_SIZE*3).astype('float32')
-    print("-Image After Reshape-\n")
-    print("Image Shape: ", img.shape)
-    print(img)
+
     return img
 
 def get_metrics(path, extension, IMG_SIZE):
@@ -146,52 +135,34 @@ def getLabel(path):
     print(type)
     return int(type == 'dog')
 
-def load_image_dataset(x_train, y_train, x_valid, y_valid):
+def load_dataset(x_name, y_name):
     
-
-    print('getting image data from npy files. . .')
-
-    x_train = np.load(x_train)
-    y_train = np.load(y_train)
-    x_valid = np.load(x_valid)
-    y_valid = np.load(y_valid)
-      
-    return x_train, y_train, x_valid, y_valid
-
-def get_image_dataset(path, extension, x_name, y_name,IMG_SIZE, modelType = 'keras'):
-    '''
-    gets the data and saves it as a numpy array
-    '''
-    
-    print('getting data from directory. . .')
-
-    x,y = parse_image_dataset(path,extension,IMG_SIZE,modelType)
-
-    np.save(x_name, x)
-    np.save(y_name, y)
+    print('getting vector data from npy files. . .')
+  
+    x = np.load(x_name)
+    y = np.load(y_name)
 
     print('-Data set -\nX Shape', x.shape, '\nY Length: ' , len(y))
 
+    return x, y
 
-def parse_image_data(path, extension,IMG_SIZE, modelType = 'keras'):
+def parse_image_data(path, extension, x_name, y_name,IMG_SIZE, modelType = 'keras', standardize = True):
     '''
     returns an numpy array of images for x and list of labels for y
     '''
+
+    print('getting data from directory. . .')
+
     images = []
     labels = []
     paths =  glob.glob(os.path.join(path, '*.*.' + extension)) #contains all cats and all dog images
     np.random.shuffle(paths) #shuffle to prevent overfitting
-    #for path in paths: 
-    #    img = io.imread(path)
-    for i in range(0,1):
-        img = io.imread(paths[i])
-        print("Original Image From Folder: ")
-        print("Image Shape: ", img.shape)
-        print(img)
+    for path in paths: 
+        img = io.imread(path)
         if modelType == 'keras':
-            img = preprocess_img_keras(img, IMG_SIZE)
+            img = preprocess_img_keras(img, IMG_SIZE,standardize)
         elif modelType == 'scikit':
-            img = preprocess_img_scikit(img, IMG_SIZE)
+            img = preprocess_img_scikit(img, IMG_SIZE, standardize)
         images.append(img)
         label = getLabel(path)
         labels.append(label)
@@ -200,45 +171,65 @@ def parse_image_data(path, extension,IMG_SIZE, modelType = 'keras'):
     x = np.array(images, dtype='float32')
     y = labels
 
+    np.save(x_name, x)
+    np.save(y_name, y)
+
+    print('-Data set -\nX Shape', x.shape, '\nY Length: ' , len(y))
+    print('mean: ', np.mean(x),'std: ', np.std(x))
     return x,y
 
-def parse_vector_dataset(path):
+def parse_vector_dataset(path,x_name,y_name,position_of_label = 'first', delim = ','):
+    '''
+    this function often changed based on the anomalies of each dataset
+    '''
     with open(path, "r") as ins:
         data = []
         labels = []
         for line in ins:
-
-            #get rid of new line, split by comma
-            list = line.replace('\n','').split(',')
-
-            #convert string to float
+            
+            #get rid of new line, split by delim
+            list = line.strip().replace('\n','')
+            list = re.split(delim,list)
+            
+            if '?' in list:
+                continue
+            #convert to float
             list = [float(x) for x in list]
 
-            #add to data excluding first entry since it's the label
-            data.append(list[1:])
+            if(position_of_label == 'first'):
+                #add to data excluding first entry since it's the label
+                data.append(list[1:])
 
-            #add label
-            labels.append(int(list[0]))
+                #add label
+                labels.append(int(list[0]))
 
-    return np.array(data), labels
+            elif(position_of_label == 'last'):
+                
+                data.append(list[:-1])
 
-def load_vector_dataset(x_name, y_name):
-    
-    print('getting vector data from npy files. . .')
-  
-    x = np.load(x_name)
-    y = np.load(y_name)
-    
-    return x, y
-    
-def get_vector_dataset(path, x_name, y_name):
-    
-    x,y = parse_vector_dataset(path)
+                #add label
+                if int(list[-1]) == 2:
+                    labels.append(0)
+                elif int(list[-1]) == 4:
+                    labels.append(1)
+                else:
+                    print('SOMETHING WENT WRONG')
+                #labels.append(int(list[-1]))
 
+    x = np.array(data)
+    y = labels
+
+    if(min(y) is not 0):
+        #make sure labels start at 0
+        y = [x - 1 for x in y]
+        print('Making labels start at 0')
+ 
     np.save(x_name,x)
     np.save(y_name,y)
 
     print('-Data set -\nX Shape', x.shape, '\nY Length: ' , len(y))
+
+    return x, y
     
 def one_hot(y,NUM_CLASSES):
     '''
@@ -288,6 +279,7 @@ def CNN_deepModel(NUM_CLASSES, IMG_SIZE):
 def Keras_Website_Model(NUM_CLASSES, IMG_SIZE):
 
 	model = Sequential()
+    
 	model.add(Conv2D(32, (3, 3), input_shape=(3,IMG_SIZE,IMG_SIZE)))
 	model.add(Activation('relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -304,11 +296,53 @@ def Keras_Website_Model(NUM_CLASSES, IMG_SIZE):
 	model.add(Dense(64))
 	model.add(Activation('relu'))
 	model.add(Dropout(0.5))
+
 	model.add(Dense(NUM_CLASSES))
 	model.add(Activation('softmax'))
 
 	model.compile(loss='categorical_crossentropy',optimizer=Adam(lr=1e-3), metrics=['accuracy'])
 	return model
+
+def custom_Deep_Model(input_size, num_layers, num_hidden_units,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate):
+    
+    model = Sequential()
+   
+    if optimizer == 'adam':
+        opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.05)
+
+    model.add(Dense(num_hidden_units,input_shape = input_size, activation = hidden_activation))
+
+    for i in range(num_layers):
+        model.add(Dense(num_hidden_units,activation = hidden_activation ))
+
+    model.add(Dense(num_outputs, activation = output_activation))
+
+    model.compile(loss=loss,optimizer=opt, metrics=['accuracy'])
+    
+    return model
+
+def custom_CNN_Model(input_size, num_layers,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate, filter_size, kernal_size, pooling_size):
+    
+    model = Sequential()
+   
+    if optimizer == 'adam':
+        opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.05)
+
+    model.add(Conv2D(filter_size, kernal_size, input_shape=input_size, activation=hidden_activation))
+    model.add(MaxPooling2D(pool_size=pooling_size))
+
+    for i in range(num_layers):
+        model.add(Conv2D(filter_size, kernal_size))
+        model.add(Activation(hidden_activation))
+        model.add(MaxPooling2D(pool_size=pooling_size))
+
+    model.add(Flatten())
+    #model.add(Dropout(0.5))
+    model.add(Dense(num_outputs, activation = output_activation))
+
+    model.compile(loss=loss,optimizer=opt, metrics=['accuracy'])
+    
+    return model
 
 # Mean of each channel as provided by VGG researchers
 
@@ -322,26 +356,183 @@ def vgg_preprocess(x):
     #return x[:, ::-1]    # reverse axis bgr->rgb
     return x
 
-def showImage(img):
+def showImage(img, title= '' ,transpose = False):
 
-    display = np.transpose(img, (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
-    z = np.copy(display).astype('uint8')
+    if transpose:
+        display = np.transpose(img, (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
+        z = np.copy(display).astype('uint8')
+    else:
+        z = img
+    pyplot.title(title)
     pyplot.imshow(z)
     pyplot.show()
 
-def plotPCA(pca, y):
-    color = 'y'
+def plotPCA(pca, y, dimensions,labels,xlabel = '', ylabel = '', title = ''):
+    num_classes = int(max(y)) + 1
+    print('Plotting ',num_classes, ' classes in ', dimensions, ' dimensions')
+
+    clrs = ['y','b','r', 'g', 'c','m','k','w']
     for i in range(len(pca)):
-        if(y[i] == 1):
-            color = 'b'
-        elif(y[i]==2):
-            color = 'r'
-        elif(y[i] ==3):
-            color = 'g'
-        pyplot.plot(pca[i][0],pca[i][1], marker='o', ms = 5, alpha=1, color=color)
+        color = clrs[int(y[i])]
+        
+        if(dimensions == 1):
+            pyplot.plot(pca[i],0,marker='+', ms = 1, alpha=1, color=color)
+        elif(dimensions == 2):
+            pyplot.plot(pca[i][0],pca[i][1], marker='o', ms = 5, alpha=1, color=color)
+        elif(dimensions == 0): #used if wanting to plot 1D pca/lda in 2D
+            pyplot.plot(pca[i][0],i, marker='o', ms = 5, alpha=1, color=color)
     patches = []
-    patches.append(mpatches.Patch(color='b', label='1'))
-    patches.append(mpatches.Patch(color='r', label='2'))
-    patches.append(mpatches.Patch(color='g', label='3'))
+    
+  
+    for i in range(0,num_classes):
+        patches.append(mpatches.Patch(color=clrs[i], label=labels[i]))
+ 
+    
     pyplot.legend(handles=patches, bbox_to_anchor=(1, 1), bbox_transform=pyplot.gcf().transFigure)
+    pyplot.title(title)
+    pyplot.xlabel(xlabel)
+    pyplot.ylabel(ylabel)
     pyplot.show()
+
+def create_validation_set(x_train, y_train, num_validations):
+    
+    x_valid = []
+    y_valid = []
+
+    #gets unique random numbers the size of num_validations
+    indexes = random.sample(range(0,x_train.shape[0]-1), round(num_validations))
+
+
+    for index in indexes:
+        x_valid.append(x_train[index])
+        y_valid.append(y_train[index])
+
+        
+    new_x_train = np.delete(x_train,indexes,0)
+    new_y_train = np.delete(y_train,indexes,0)
+    x_valid = np.array(x_valid, dtype='float32')
+
+    print('-New Training Data set -\nX Shape', new_x_train.shape, '\nY Length: ' , len(new_y_train))
+    print('-Validation Data set -\nX Shape', x_valid.shape, '\nY Length: ' , len(y_valid))
+    
+    return new_x_train,new_y_train,x_valid,y_valid
+
+def show_standardize_img(path):
+    img = io.imread(path)
+    showImage(img,"Raw Image" ,False)
+    img2 = preprocess_img_keras(img, 224,True)
+    showImage(img2,"Standardized Image", True)
+
+def show_standardize_vector(path):
+    x,y = parse_vector_dataset(path)
+
+    for i in range(0,len(x[0])):
+        print(i)
+        pyplot.plot(x[0][i],0,marker='o', ms = 3, alpha=1, color='b') 
+    pyplot.title('Raw Wine Data')  
+    pyplot.show()
+
+    x_std = (x - np.mean(x,axis=0) ) / np.std(x,axis=0)
+    for i in range(0,len(x[0])):
+        pyplot.plot(x_std[0][i],0,marker='o', ms = 3, alpha=1, color='b')   
+    pyplot.title('Standardized Wine Data')  
+    pyplot.show()
+
+
+def get_confusion_matrix(y_true, y_pred, labels, title = ''):
+    cnf_matrix = confusion_matrix(y_true, y_pred)
+    np.set_printoptions(precision=2)
+    pyplot.figure()
+    plot_confusion_matrix(cnf_matrix, classes=labels, title=title)
+    pyplot.show()
+
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=pyplot.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+
+    Taken directly from http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    pyplot.imshow(cm, interpolation='nearest', cmap=cmap)
+    pyplot.title(title)
+    pyplot.colorbar()
+    tick_marks = np.arange(len(classes))
+    pyplot.xticks(tick_marks, classes, rotation=45)
+    pyplot.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        pyplot.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    pyplot.tight_layout()
+    pyplot.ylabel('True label')
+    pyplot.xlabel('Predicted label')
+
+
+def draw_neural_net(ax, left, right, bottom, top, layer_sizes):
+    '''
+    CODE TAKEN DIRECTLY FROM https://gist.github.com/craffel/2d727968c3aaebd10359
+
+    Draw a neural network cartoon using matplotilb.
+    
+    :usage:
+        >>> fig = plt.figure(figsize=(12, 12))
+        >>> draw_neural_net(fig.gca(), .1, .9, .1, .9, [4, 7, 2])
+    
+    :parameters:
+        - ax : matplotlib.axes.AxesSubplot
+            The axes on which to plot the cartoon (get e.g. by plt.gca())
+        - left : float
+            The center of the leftmost node(s) will be placed here
+        - right : float
+            The center of the rightmost node(s) will be placed here
+        - bottom : float
+            The center of the bottommost node(s) will be placed here
+        - top : float
+            The center of the topmost node(s) will be placed here
+        - layer_sizes : list of int
+            List of layer sizes, including input and output dimensionality
+    '''
+    n_layers = len(layer_sizes)
+    v_spacing = (top - bottom)/float(max(layer_sizes))
+    h_spacing = (right - left)/float(len(layer_sizes) - 1)
+    # Nodes
+    for n, layer_size in enumerate(layer_sizes):
+        layer_top = v_spacing*(layer_size - 1)/2. + (top + bottom)/2.
+        for m in range(layer_size):
+            circle = pyplot.Circle((n*h_spacing + left, layer_top - m*v_spacing), v_spacing/4.,
+                                color='w', ec='k', zorder=4)
+            ax.add_artist(circle)
+    # Edges
+    for n, (layer_size_a, layer_size_b) in enumerate(zip(layer_sizes[:-1], layer_sizes[1:])):
+        layer_top_a = v_spacing*(layer_size_a - 1)/2. + (top + bottom)/2.
+        layer_top_b = v_spacing*(layer_size_b - 1)/2. + (top + bottom)/2.
+        for m in range(layer_size_a):
+            for o in range(layer_size_b):
+                line = pyplot.Line2D([n*h_spacing + left, (n + 1)*h_spacing + left],
+                                  [layer_top_a - m*v_spacing, layer_top_b - o*v_spacing], c='k')
+                ax.add_artist(line)
+
+def draw_nn(size, save_name):
+    fig = pyplot.figure(figsize=(12, 12))
+    ax = fig.gca()
+    ax.axis('off')
+    draw_neural_net(ax, .1, .9, .1, .9, size)
+    fig.savefig(save_name)
+
+draw_nn([4,1,1,1],'lr.png')
+

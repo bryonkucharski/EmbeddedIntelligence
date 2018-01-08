@@ -58,6 +58,7 @@ num_classes = len(y_test)
 
 def basic_deepModel():
     model = Sequential()
+    
     model.add(Dense(reshape_pixels, input_dim = reshape_pixels,activation='relu'))
     model.add(Dense(num_classes, activation='softmax')) #between 0 and 1
 
