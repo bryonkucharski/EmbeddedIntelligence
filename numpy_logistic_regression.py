@@ -81,6 +81,7 @@ class numpy_logistic_regression():
         
         W = self.parameters['W']
         b = self.parameters['b']
+        
         Y_hat = self.parameters['Y_hat']
 
         m = len(X)

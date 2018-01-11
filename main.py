@@ -250,13 +250,13 @@ y_valid = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_valid
 runNumpyLogisticRegression( 
                         
 
-                            x = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy',
-                            y = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy',
-                            x_valid= r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_valid_flattened_50.npy',
-                            y_valid = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_valid_flattened_50.npy',
+                            x = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_x_train.npy',
+                            y = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_train.npy',
+                            x_valid= r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_x_valid.npy',
+                            y_valid = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_valid.npy',
                             
                             num_iterations = 2000, 
-                            learning_rate = .01,
+                            learning_rate = .005,
                             title = 'Dog Cats Confusion Matrix',
                             labels = ['cat','dog'])
 
