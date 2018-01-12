@@ -30,7 +30,7 @@ class numpy_artificial_neural_network:
     def relu(self,z):
         return z * (z > 0)
     
-   def relu_derivative(self,z):
+    def relu_derivative(self,z):
        return 1. * (z > 0)
 
     def initialize(self, dimensions):
@@ -45,19 +45,24 @@ class numpy_artificial_neural_network:
 
         self.num_layers = len(dimensions)
 
-        for i in range(1,num_layers):
+        for i in range(1,self.num_layers):
             self.parameters.update({'W' + str(i): np.random.randn(dimensions[i], dimensions[i-1]) * 0.01})
             self.parameters.update({'b' + str(i): np.zeros((dimensions[i],1))})
+
     
     
     def compute_forward(self, X, W, b, activation='relu'):
 
+        print(X.shape)
+        print(W.shape)
+        print(b.shape)
+
         Z = np.add(np.dot(W,X),b)
         
         if activation == 'relu':
-            A = self.relu(A)
+            A = self.relu(Z)
         elif activation == 'sigmoid':
-            A = self.sigmoid(A)
+            A = self.sigmoid(Z)
 
         return Z,A
 
@@ -74,17 +79,17 @@ class numpy_artificial_neural_network:
     
             Z,A = self.compute_forward( A_prev, W, b ,'relu')
 
-            self.A_cache.update({'A' + str(l): , A })
-            self.Z_cache.update({'Z' + str(l): , Z })
+            self.A_cache.update({'A' + str(l):  A })
+            self.Z_cache.update({'Z' + str(l):  Z })
 
         #compute last layer using sigmoid
         Z_hat, Y_hat = self.compute_forward(   A, 
-                                        self.parameters['W' + str(self.num_layers)],
-                                        self.parameters['b' + str(self.num_layers)],
+                                        self.parameters['W' + str(self.num_layers-1)],
+                                        self.parameters['b' + str(self.num_layers-1)],
                                         'sigmoid')
 
-        self.A_cache.update({'A' + str(self.num_layers): , Y_hat })
-        self.Z_cache.update({'Z' + str(self.num_layers): , Z_hat })
+        self.A_cache.update({'A' + str(self.num_layers-1):  Y_hat })
+        self.Z_cache.update({'Z' + str(self.num_layers-1):  Z_hat })
 
         return Y_hat
 
@@ -103,8 +108,8 @@ class numpy_artificial_neural_network:
         m = Y_true.shape[1]
         A_prev = Y_hat
 
-        W = self.parameters['W' +  str(self.num_layers)]
-        Z = self.parameters['Z' +  str(self.num_layers)]
+        W = self.parameters['W' +  str(self.num_layers-1)]
+        Z = self.parameters['Z' +  str(self.num_layers-1)]
         
         #derivative of cost function J with respect to y_hat
         dY_hat = - (np.divide(Y_true, Y_hat) - np.divide(1 - Y_true, 1 - Y_hat))
@@ -115,8 +120,8 @@ class numpy_artificial_neural_network:
         db = np.squeeze(np.sum(dZ, axis=1, keepdims=True)) / m
         dA_prev = np.dot(W.T, dZ)
 
-         self.grads.update({'dW' + str(self.num_layers): , dW })
-         self.grads.update({'db' + str(self.num_layers): , db })
+        self.grads.update({'dW' + str(self.num_layers-1):  dW })
+        self.grads.update({'db' + str(self.num_layers-1):  db })
 
 
         #all relu layers
@@ -132,8 +137,8 @@ class numpy_artificial_neural_network:
             db = np.squeeze(np.sum(dZ, axis=1, keepdims=True)) / m
             dA_prev = np.dot(W.T, dZ)
 
-            self.grads.update({'dW' + str(l): , dW })
-            self.grads.update({'db' + str(l): , db })
+            self.grads.update({'dW' + str(l):  dW })
+            self.grads.update({'db' + str(l):  db })
             
 
     def update(self, learning_rate):
@@ -169,14 +174,16 @@ class numpy_artificial_neural_network:
 
 nn = numpy_artificial_neural_network()
 
-dims = [12288, 20, 7, 5, 1]
+dims = [12288,1]
 
-x,y = utils.load_dataset('','')
+x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
+x=np.swapaxes(x,0,1)
+y = np.reshape(y,(1,len(y)))
 
 nn.fit(
-        X = 
-        Y = 
-        layers_dims = dims
-        learning_rate = 0.009
+        X = x,
+        Y = y,
+        layers_dims = dims,
+        learning_rate = 0.009,
         num_iterations=3000
     )
