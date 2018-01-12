@@ -24,7 +24,7 @@ class numpy_artificial_neural_network:
     def sigmoid(self, z):
         return 1/(1+(np.exp(-z)))
     
-    def sigmoid_derivative(z):
+    def sigmoid_derivative(self,z):
         return self.sigmoid(z) * (1-self.sigmoid(z))
 
     def relu(self,z):
@@ -48,16 +48,16 @@ class numpy_artificial_neural_network:
         for i in range(1,self.num_layers):
             self.parameters.update({'W' + str(i): np.random.randn(dimensions[i], dimensions[i-1]) * 0.01})
             self.parameters.update({'b' + str(i): np.zeros((dimensions[i],1))})
-
-    
-    
+        
+        
     def compute_forward(self, X, W, b, activation='relu'):
 
-        print(X.shape)
-        print(W.shape)
-        print(b.shape)
+        print('X: ' + str(X.shape))
+        print('W: ' + str(W.shape))
+        print('b: ' + str(b.shape))
 
         Z = np.add(np.dot(W,X),b)
+        print('Z: ' + str(Z.shape) + '\n')
         
         if activation == 'relu':
             A = self.relu(Z)
@@ -69,10 +69,11 @@ class numpy_artificial_neural_network:
     def forward_propagate(self, X, Y):
         
         A = X
+        L = len(self.parameters)//2
 
         #computer rest of layers using relu
-        for l in range(1, self.num_layers): #does not include the last layer (num_layers)
-            
+        for l in range(1, L): #does not include the last layer (num_layers)
+            print('l' +str(l))
             A_prev = A
             W = self.parameters['W' + str(l)]   
             b = self.parameters['b' + str(l)]
@@ -84,12 +85,12 @@ class numpy_artificial_neural_network:
 
         #compute last layer using sigmoid
         Z_hat, Y_hat = self.compute_forward(   A, 
-                                        self.parameters['W' + str(self.num_layers-1)],
-                                        self.parameters['b' + str(self.num_layers-1)],
+                                        self.parameters['W' + str(L)],
+                                        self.parameters['b' + str(L)],
                                         'sigmoid')
 
-        self.A_cache.update({'A' + str(self.num_layers-1):  Y_hat })
-        self.Z_cache.update({'Z' + str(self.num_layers-1):  Z_hat })
+        self.A_cache.update({'A' + str(L):  Y_hat })
+        self.Z_cache.update({'Z' + str(L):  Z_hat })
 
         return Y_hat
 
@@ -107,9 +108,10 @@ class numpy_artificial_neural_network:
         #gradiaent descent
         m = Y_true.shape[1]
         A_prev = Y_hat
+        L = len(self.A_cache)
 
-        W = self.parameters['W' +  str(self.num_layers-1)]
-        Z = self.parameters['Z' +  str(self.num_layers-1)]
+        W = self.parameters['W' +  str(L)]
+        Z = self.Z_cache['Z' +  str(L)]
         
         #derivative of cost function J with respect to y_hat
         dY_hat = - (np.divide(Y_true, Y_hat) - np.divide(1 - Y_true, 1 - Y_hat))
@@ -120,31 +122,34 @@ class numpy_artificial_neural_network:
         db = np.squeeze(np.sum(dZ, axis=1, keepdims=True)) / m
         dA_prev = np.dot(W.T, dZ)
 
-        self.grads.update({'dW' + str(self.num_layers-1):  dW })
-        self.grads.update({'db' + str(self.num_layers-1):  db })
+        self.grads.update({'dW' + str(L):  dW })
+        self.grads.update({'db' + str(L):  db })
 
 
         #all relu layers
-        for l in reversed(range(self.num_layers-1)): #does not include the last layer (num_layers)
-
-            W = self.parameters['W' + str(l)]
-            Z = self.Z_cache['Z' +  str(l)]
-            b = self.parameters['b' + str(l)]
-            A_prev = self.A_cache['A' + str(l-1)]
+        for l in reversed(range(L-1)): #does not include the last layer (num_layers)
+            print('back l' +str(l)+ str(L))
+            W = self.parameters['W' + str(l + 1)]
+            Z = self.Z_cache['Z' +  str(l + 1)]
+            b = self.parameters['b' + str(l + 1)]
+            A_prev = self.A_cache['A' + str(l+1)]
 
             dZ = dA_prev * self.relu_derivative(Z)
             dW = np.dot(dZ, A_prev.T) / m
             db = np.squeeze(np.sum(dZ, axis=1, keepdims=True)) / m
             dA_prev = np.dot(W.T, dZ)
 
-            self.grads.update({'dW' + str(l):  dW })
-            self.grads.update({'db' + str(l):  db })
+            self.grads.update({'dW' + str(l+1):  dW })
+            self.grads.update({'db' + str(l+1):  db })
             
 
     def update(self, learning_rate):
-        for l in range(self.num_layers): 
-            parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
-            parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate * grads["db" + str(l+1)]
+        L = len(self.parameters) // 2
+        for l in range(L): 
+            print(self.grads["dW" + str(l+1)].shape)
+            print(self.parameters["W" + str(l+1)].shape)
+            self.parameters["W" + str(l+1)] = self.parameters["W" + str(l+1)] - learning_rate * self.grads["dW" + str(l+1)]
+            self.parameters["b" + str(l+1)] = self.parameters["b" + str(l+1)] - learning_rate * self.grads["db" + str(l+1)]
 
     def fit(self,X,Y,layers_dims, learning_rate=0.0075, num_iterations=3000):
         
@@ -158,7 +163,7 @@ class numpy_artificial_neural_network:
 
             self.backward_propagate(X,Y, Y_hat)
 
-            self.update(lr)
+            self.update(learning_rate)
         
             if i % 100 == 0:
                         #costs.append(self.parameters['cost'])
@@ -174,7 +179,7 @@ class numpy_artificial_neural_network:
 
 nn = numpy_artificial_neural_network()
 
-dims = [12288,1]
+dims = [12288,7,1]
 
 x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
 x=np.swapaxes(x,0,1)
