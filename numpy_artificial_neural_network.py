@@ -148,7 +148,7 @@ class numpy_artificial_neural_network:
         for l in range(L): 
             print(self.grads["dW" + str(l+1)].shape)
             print(self.parameters["W" + str(l+1)].shape)
-            self.parameters["W" + str(l+1)] = self.parameters["W" + str(l+1)] - learning_rate * self.grads["dW" + str(l+1)]
+           # self.parameters["W" + str(l+1)] = self.parameters["W" + str(l+1)] - learning_rate * self.grads["dW" + str(l+1)]
             self.parameters["b" + str(l+1)] = self.parameters["b" + str(l+1)] - learning_rate * self.grads["db" + str(l+1)]
 
     def fit(self,X,Y,layers_dims, learning_rate=0.0075, num_iterations=3000):
@@ -177,18 +177,4 @@ class numpy_artificial_neural_network:
     def get_parameters(self):
         return self.parameters
 
-nn = numpy_artificial_neural_network()
 
-dims = [12288,7,1]
-
-x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
-x=np.swapaxes(x,0,1)
-y = np.reshape(y,(1,len(y)))
-
-nn.fit(
-        X = x,
-        Y = y,
-        layers_dims = dims,
-        learning_rate = 0.009,
-        num_iterations=3000
-    )

@@ -73,11 +73,28 @@ def runLDA(path = '', dataset_x= '', dataset_y= '', parseData = False,standardiz
         results = classifiers.numpy_LDA(num_classes, num_features, labels,standardize, title)
     print(results)
 
-def runNumpyLogisticRegression(x,y,x_valid,y_valid, num_iterations = 2000, learning_rate = .05, title = '', labels=''):
+def runNumpyLogisticRegression():
+    
+    x = r'NumpyDataa\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_x_train.npy',
+    y = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_train.npy',
+    x_valid= r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_x_valid.npy',
+    y_valid = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_valid.npy',
+    
+    num_iterations = 2000, 
+    learning_rate = .005,
+    title = 'Dog Cats Confusion Matrix',
+    labels = ['cat','dog']
     
     classifiers.load_dataset(x,y,x_valid,y_valid)
                       
     classifiers.numpy_logistic_reg(num_iterations, learning_rate, confusion_title=title, confusion_labels=labels)
+
+def runNumpyDeepNeuralNetwork():
+    dims = [12288,7,1]
+
+    x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
+    x=np.swapaxes(x,0,1)
+    y = np.reshape(y,(1,len(y)))
 
 def HyperparameterTuneDeepNN(iterations):
     results = []
@@ -247,18 +264,7 @@ y_valid = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_valid
 #lr for breast cancer = 0.05
 #lr for wine = .0003
 
-runNumpyLogisticRegression( 
-                        
-
-                            x = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_x_train.npy',
-                            y = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_train.npy',
-                            x_valid= r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_x_valid.npy',
-                            y_valid = r'NumpyData\Breast Cancer\wdbc\preprocessed\breast_cancer_wdbc_y_valid.npy',
-                            
-                            num_iterations = 2000, 
-                            learning_rate = .005,
-                            title = 'Dog Cats Confusion Matrix',
-                            labels = ['cat','dog'])
+runNumpyLogisticRegression()
 
 
 '''

@@ -37,23 +37,46 @@ calculated_mean = np.array([124.57197905557038, 116.11287913542041, 106.35763620
 calculated_std = np.array([ 29.61407124, 28.21495712, 29.42529447]).reshape((3,1,1))
 
 def resize_img(img, IMG_SIZE):
-    '''
-    resizes the images to a standard size
-    '''
+    """
+    Resizes image to IMG_SIZE, IMG_SIZE
+
+    Args:
+        img: input image 
+        IMG_SIZE: size to reshape the image 
+    Returns:
+        resized image
+    """
     # rescale to standard size
     img = transform.resize(img, (IMG_SIZE, IMG_SIZE), mode='constant', preserve_range=True)
 
     return img
 
 def roll_image(img):
-     # roll color axis to axis 0
+    """
+    Rolls an axis back negative one
+    used to turn an image such as (3,224,224) to (224,224,3)
+
+    Args:
+        img: input image 
+    Returns:
+        rolled image
+    """
     img = np.rollaxis(img, -1)
     return img
 
 def preprocess_img_keras(img, IMG_SIZE, standardize = True):
-    '''
-    resizes the images to a standard size and rearranges the array dimensions
-    '''
+    """
+    Resizes image to IMG_SIZE, IMG_SIZE
+    Rolls image
+    standardizes images in R,B,G channels based on output of get_metrics
+
+    Args:
+        img: input image format (3,size,size)
+        IMG_SIZE: size to reshape the image 
+        standardize: boolean to standardize or not
+    Returns:
+        preprocessed image size (IMG_SIZE,IMG_SIZE,3)
+    """
 
     img = resize_img(img, IMG_SIZE)
 
@@ -65,14 +88,27 @@ def preprocess_img_keras(img, IMG_SIZE, standardize = True):
         img[2,:,:] = np.divide(np.subtract(img[2,:,:],calculated_mean[2]),calculated_std[2])
 
     return img
-
+'''
 def reshape_data(data, IMG_SIZE):
 
         data = data.reshape(data.shape[0], IMG_SIZE*IMG_SIZE*3).astype('float32')
 
         return data
-
+'''
 def preprocess_img_scikit(img, IMG_SIZE,standardize = True):
+    """
+    *Also known as flattening the image. the Scikit library requires all flattened images
+    Resizes image to IMG_SIZE, IMG_SIZE
+    Rolls image
+    standardizes images in R,B,G channels based on output of get_metrics
+
+    Args:
+        img: input image format (size,size,3)
+        IMG_SIZE: size to reshape the image 
+        standardize: boolean to standardize or not
+    Returns:
+        preprocessed image size (1,IMG_SIZE*IMG_SIZE*3)
+    """
     
     #img = transform.resize(img,(1,IMG_SIZE*IMG_SIZE*3),mode = 'constant')
     img = resize_img(img, IMG_SIZE)
@@ -87,9 +123,16 @@ def preprocess_img_scikit(img, IMG_SIZE,standardize = True):
     return img
 
 def get_metrics(path, extension, IMG_SIZE):
-    '''
-    returns mean, std of an image dataset
-    '''
+    """
+    calculates mean and std of entire dataset
+
+    Args:
+        path: path to folder of images
+        IMG_SIZE: size to reshape the image 
+        extension: 'jpg' , 'png' , etc.
+    Returns:
+        mean, std
+    """
     mean = [0,0,0]
     M2 = [0,0,0]
 
@@ -113,13 +156,18 @@ def get_metrics(path, extension, IMG_SIZE):
     return mean, std
 
 def calculate_metrics(img, index, old_mean,old_M2, n):
-    '''
-    Welfords Algorithm to find variance and mean in one iteraton of each dimension of an image 
+    """
+    Welfords Algorithm to find variance and mean in one iteraton of each dimension of an image
 
-    img is in the format IMG_SIZE, IMG_SIZE, 3
-    index - 0, 1, or 2 for R, G, B
-
-    '''
+    Args:
+        img: image size IMG_SIZE, IMG_SIZE, 3
+        index: 0, 1, or 2 for R, G, B
+        old_mean: mean from last iteration (or 0 to start) 
+        old_M2:  M2 from last iteration (or 0 to start) 
+        n: number of images so far
+    Returns:
+        new mean and M2
+    """
     x = np.mean(img[:,:,index]) #returns the mean of the current image in the dimension specificed by index
     delta = x - old_mean
     new_mean = old_mean + (delta/n)
@@ -128,14 +176,31 @@ def calculate_metrics(img, index, old_mean,old_M2, n):
     return new_mean, new_M2
 
 def getLabel(path):
-    '''
-    returns 1 for cat and 0 for dog
-    '''
+    """
+    cat and dog dataset the label was in the image name. this parses the name of the file to get either cat (0) or dog(1)
+    returns 1 for cat and 0 for dog - not the best solution - needs to be tweaked if using linux machine vs windows machine
+
+    Args:
+        path: image name
+    Returns:
+        label
+    """
+    
     type = path.split('.')[0].split('/')[-1] # split string to get 'cat' or 'dog'
     print(type)
     return int(type == 'dog')
 
 def load_dataset(x_name, y_name):
+    """
+    loads a .npy file x_name and y_name
+
+    Args:
+        x_name: .npy file name for x
+        y_name: .npy file name for y
+       
+    Returns:
+        x,y matricies of data
+    """
     
     print('getting vector data from npy files. . .')
   
@@ -147,9 +212,26 @@ def load_dataset(x_name, y_name):
     return x, y
 
 def parse_image_data(path, extension, x_name, y_name,IMG_SIZE, modelType = 'keras', standardize = True):
-    '''
+    """
+    this was written for the cats/dogs data set. Another parse method will probably need to be written for other data sets
+    read, resize, standardize image
+    get the label
+    save the arrays as an npy file
     returns an numpy array of images for x and list of labels for y
-    '''
+
+    Args:
+        path: path to folder of images
+        IMG_SIZE: size to reshape the image 
+        extension: 'jpg' , 'png' , etc.
+        x_name: name to save x data once parsed
+        y_name: name to save y data once parsed
+        modelType: 'keras' to call preprocess_img_keras , 'scikit' to call preprocess_img_scikit
+        standardize: boolean to standardize or not
+
+    Returns:
+        x,y matricies of data
+    """
+
 
     print('getting data from directory. . .')
 
@@ -180,7 +262,7 @@ def parse_image_data(path, extension, x_name, y_name,IMG_SIZE, modelType = 'kera
 
 def parse_vector_dataset(path,x_name,y_name,position_of_label = 'first', delim = ','):
     '''
-    this function often changed based on the anomalies of each dataset
+    this function often changed based on the dataset - was not able to write one function to parse every dataset
     '''
     with open(path, "r") as ins:
         data = []
@@ -232,22 +314,49 @@ def parse_vector_dataset(path,x_name,y_name,position_of_label = 'first', delim =
     return x, y
     
 def one_hot(y,NUM_CLASSES):
-    '''
+    """
     turns a list into a one hot matrix
-    '''
+
+    Args:
+        y: y vector of labels
+        NUM_CLASSES: number of classes in dataset
+        
+    Returns:
+        one hot array of input data
+    """
+
     y = np.eye(NUM_CLASSES, dtype='uint8')[y]
     return y
 
 def reverse_one_hot(one_hot_array):
-    '''
-    turns a one hot matrix back into a 1D array
-    '''
+    """
+    turns a one hot matrix back into a vector
+
+    Args:
+        one_hot_array: one hot array of y data
+        
+    Returns:
+        y vector of labels
+    """
     return np.apply_along_axis(get_argmax, axis=1, arr = one_hot_array)
 
+'''
 def get_argmax(input):
     return np.argmax(input)
+'''
 
 def largeCNN_deepModel(NUM_CLASSES, IMG_SIZE):
+    """
+    Larger CNN
+
+    Args:
+        NUM_CLASSES: number of classes for the output layer
+        IMG_SIZE: (3,IMG_SIZE, IMG_SIZE) of input data
+        
+    Returns:
+        keras model 
+    """
+    
     model = Sequential()
     model.add(Conv2D(30, (5, 5), input_shape=(3,IMG_SIZE,IMG_SIZE), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -263,6 +372,16 @@ def largeCNN_deepModel(NUM_CLASSES, IMG_SIZE):
     return model
 
 def CNN_deepModel(NUM_CLASSES, IMG_SIZE):
+    """
+    Smaller CNN
+
+    Args:
+        NUM_CLASSES: number of classes for the output layer
+        IMG_SIZE: (3,IMG_SIZE, IMG_SIZE) of input data
+        
+    Returns:
+        keras model 
+    """
     model = Sequential()
     model.add(Conv2D(32, (5, 5), input_shape=(3, IMG_SIZE, IMG_SIZE), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -277,7 +396,9 @@ def CNN_deepModel(NUM_CLASSES, IMG_SIZE):
 
 
 def Keras_Website_Model(NUM_CLASSES, IMG_SIZE):
+	
 
+	
 	model = Sequential()
     
 	model.add(Conv2D(32, (3, 3), input_shape=(3,IMG_SIZE,IMG_SIZE)))
@@ -305,10 +426,23 @@ def Keras_Website_Model(NUM_CLASSES, IMG_SIZE):
 
 def custom_Deep_Model(input_size, num_layers, num_hidden_units,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate):
     
+    """
+    Custom Deep Neural Network
+    Architecture will be 
+    input layer size input_shape  -> 1 to num_layers hidden layers size num_hidden_units (all same size) -> output size num_outputs
+
+    Args:
+        inputs to the model
+        
+    Returns:
+        keras model 
+    """
+    
     model = Sequential()
    
     if optimizer == 'adam':
         opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.05)
+        #can add other Keras optimizers here
 
     model.add(Dense(num_hidden_units,input_shape = input_size, activation = hidden_activation))
 
@@ -323,6 +457,18 @@ def custom_Deep_Model(input_size, num_layers, num_hidden_units,num_outputs,outpu
 
 def custom_CNN_Model(input_size, num_layers,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate, filter_size, kernal_size, pooling_size):
     
+    """
+    Custom Convolutional Neural Network
+    Architecture will be 
+    input layer size input_shape  -> 1 to num_layers hidden layers size num_hidden_units (all same size) -> output size num_outputs
+
+    Args:
+        inputs to the model
+        
+    Returns:
+        keras model 
+    """
+
     model = Sequential()
    
     if optimizer == 'adam':
@@ -344,19 +490,17 @@ def custom_CNN_Model(input_size, num_layers,num_outputs,output_activation,hidden
     
     return model
 
-# Mean of each channel as provided by VGG researchers
-
-
-def vgg_preprocess(x):
-    '''
-        from fast.ai course
-    '''
-    x = (x - vgg_mean).astype('float32')     # subtract mean
-    #x = np.subtract(x,vgg_mean).astype('float32')
-    #return x[:, ::-1]    # reverse axis bgr->rgb
-    return x
-
 def showImage(img, title= '' ,transpose = False):
+    """
+    displays an image using matplotlib
+    must be in shape (size,size,3)
+    if image size is  (3,size,size), set transpose = true
+
+    Args:
+        img: image to show
+        title: title of plot
+        transpose: boolean to change image axis
+    """
 
     if transpose:
         display = np.transpose(img, (2, 1, 0)) #rearrange to img_size,imgsize,3 so imshow can display the image
@@ -367,23 +511,35 @@ def showImage(img, title= '' ,transpose = False):
     pyplot.imshow(z)
     pyplot.show()
 
-def plotPCA(pca, y, dimensions,labels,xlabel = '', ylabel = '', title = ''):
+def plotPCA(x, y, dimensions,labels,xlabel = '', ylabel = '', title = ''):
+    """
+    Plots x vs y if dimensions is 2
+    Plots x vs 0 if dimensions is 1
+    plots x vs index if dimenion is 0 (used for plotting a 1D array in 2 dimensions, we did this for the breat cancer dataset for the poster)
+
+    Args:
+        x: x axis data
+        y: y axis data
+        dimensions: dimensions to plot in 0, 1 or 2
+         
+    """
+
     num_classes = int(max(y)) + 1
     print('Plotting ',num_classes, ' classes in ', dimensions, ' dimensions')
 
     clrs = ['y','b','r', 'g', 'c','m','k','w']
-    for i in range(len(pca)):
+    for i in range(len(x)):
         color = clrs[int(y[i])]
         
         if(dimensions == 1):
-            pyplot.plot(pca[i],0,marker='+', ms = 1, alpha=1, color=color)
+            pyplot.plot(x[i],0,marker='+', ms = 1, alpha=1, color=color)
         elif(dimensions == 2):
-            pyplot.plot(pca[i][0],pca[i][1], marker='o', ms = 5, alpha=1, color=color)
+            pyplot.plot(x[i][0],x[i][1], marker='o', ms = 5, alpha=1, color=color)
         elif(dimensions == 0): #used if wanting to plot 1D pca/lda in 2D
-            pyplot.plot(pca[i][0],i, marker='o', ms = 5, alpha=1, color=color)
+            pyplot.plot(x[i][0],i, marker='o', ms = 5, alpha=1, color=color)
+
     patches = []
     
-  
     for i in range(0,num_classes):
         patches.append(mpatches.Patch(color=clrs[i], label=labels[i]))
  
@@ -395,6 +551,16 @@ def plotPCA(pca, y, dimensions,labels,xlabel = '', ylabel = '', title = ''):
     pyplot.show()
 
 def create_validation_set(x_train, y_train, num_validations):
+    """
+    Takes a training set and creates a validation set by randomly selecting indexes
+    validation data points are removed from the training set
+
+    Args:
+        x_train: x_train data
+        y_train: y_train data
+        num_validations: how big to make the validation set - typicaly (number_train_data * .2)
+         
+    """
     
     x_valid = []
     y_valid = []
@@ -417,29 +583,11 @@ def create_validation_set(x_train, y_train, num_validations):
     
     return new_x_train,new_y_train,x_valid,y_valid
 
-def show_standardize_img(path):
-    img = io.imread(path)
-    showImage(img,"Raw Image" ,False)
-    img2 = preprocess_img_keras(img, 224,True)
-    showImage(img2,"Standardized Image", True)
-
-def show_standardize_vector(path):
-    x,y = parse_vector_dataset(path)
-
-    for i in range(0,len(x[0])):
-        print(i)
-        pyplot.plot(x[0][i],0,marker='o', ms = 3, alpha=1, color='b') 
-    pyplot.title('Raw Wine Data')  
-    pyplot.show()
-
-    x_std = (x - np.mean(x,axis=0) ) / np.std(x,axis=0)
-    for i in range(0,len(x[0])):
-        pyplot.plot(x_std[0][i],0,marker='o', ms = 3, alpha=1, color='b')   
-    pyplot.title('Standardized Wine Data')  
-    pyplot.show()
-
 
 def get_confusion_matrix(y_true, y_pred, labels, title = ''):
+    '''
+    see below
+    '''
     cnf_matrix = confusion_matrix(y_true, y_pred)
     np.set_printoptions(precision=2)
     pyplot.figure()
@@ -528,11 +676,12 @@ def draw_neural_net(ax, left, right, bottom, top, layer_sizes):
                 ax.add_artist(line)
 
 def draw_nn(size, save_name):
+    '''
+    see above
+    '''
     fig = pyplot.figure(figsize=(12, 12))
     ax = fig.gca()
     ax.axis('off')
     draw_neural_net(ax, .1, .9, .1, .9, size)
     fig.savefig(save_name)
-
-draw_nn([4,1,1,1],'lr.png')
 

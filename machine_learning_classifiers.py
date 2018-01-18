@@ -3,12 +3,12 @@ Bryon Kucharski
 Wentworth Institute of Technology
 Fall 2017
 
-Class with variety of machine learning classifiers from Keras and Scikit
-
+Class with variety of machine learning classifiers from Keras, Scitkit, and Numpy
 '''
 
 import machine_learning_utils as utils
 from numpy_logistic_regression import numpy_logistic_regression
+from numpy_artificial_neural_network import numpy_artificial_neural_network
 import numpy as np
 from sklearn.metrics import classification_report
 from keras.callbacks import TensorBoard
@@ -76,8 +76,6 @@ class machine_learning_classifiers:
         '''
         Assumes data is already preprocessed with mean = 0 and std = 1
         '''
-        # x_std = (self.x_train - np.mean(self.x_train,axis=0) ) / np.std(self.x_train,axis=0)
-        # x_valid_std = (self.x_valid - np.mean(self.x_valid,axis=0) ) / np.std(self.x_valid,axis=0)
 
         x_std = self.x_train
         x_valid_std = self.x_valid
@@ -88,8 +86,6 @@ class machine_learning_classifiers:
 
         self.y_train = utils.one_hot(self.y_train, num_outputs) 
         self.y_valid = utils.one_hot(self.y_valid, num_outputs)
-
-        #for i in range(num_iterations):
             
         self.model.fit(x_std, self.y_train,validation_data = (x_valid_std, self.y_valid), epochs=epochs, batch_size=batch_size,  callbacks=[tbCallBack])
         scores = self.model.evaluate(self.x_valid, self.y_valid)
@@ -101,8 +97,6 @@ class machine_learning_classifiers:
         Assumes data is already preprocessed with mean = 0 and std = 1
         '''
 
-        #  x_std = (self.x_train - np.mean(self.x_train,axis=0) ) / np.std(self.x_train,axis=0)
-        #  x_valid_std = (self.x_valid - np.mean(self.x_valid,axis=0) ) / np.std(self.x_valid,axis=0)
         x_std = self.x_train
         x_valid_std = self.x_valid
 
@@ -152,17 +146,13 @@ class machine_learning_classifiers:
 
     def numpy_PCA(self, n_components,labels, standardize = True, plot_title = ''):
         '''
+        numpy implementation of PCA
         http://sebastianraschka.com/Articles/2014_pca_step_by_step.html
         '''
         if(standardize):
             x_std = (self.x_train - np.mean(self.x_train,axis=0) ) / np.std(self.x_train,axis=0)
         else:
             x_std = self.x_train
-        #x_std = self.x_train
- 
-        #x_std = self.x_train
-   
-        #x_std = self.x_train
 
         cov = np.cov(x_std.T)
         #print('cov',cov)
@@ -171,15 +161,13 @@ class machine_learning_classifiers:
    
         # sort eigenvalue in decreasing order
         idx = np.argsort(abs(evals))[::-1]
+
+        #get the top eigenvectors
         evecs = evecs[:,idx]
   
-
         #get the top eigenvalues
         evals = evals[idx]
-        #get the top eigenvectors
        
-        #print('W',W)
-        #print(evecs)
         pca = x_std.dot(evecs)
         pca = pca[:,:n_components]
 
@@ -188,12 +176,18 @@ class machine_learning_classifiers:
         return pca
 
     def scikit_PCA(self, n_components,labels, title = ''):
+        '''
+        scikit implementation of PCA
+        '''
         model = sklearnPCA(n_components=n_components)
         pca = model.fit_transform(self.x_train)
         utils.plotPCA(pca,self.y_train, n_components,labels, title = title)
         return pca
 
     def scikit_LDA(self, num_classes,labels, plot = True,predict_image='None'):
+        '''
+        scikit implementation of LDA
+        '''
         model = LinearDiscriminantAnalysis()
         lda = model.fit_transform(self.x_train,self.y_train)
         #acc = model.score(self.x_valid, self.y_valid)
@@ -204,6 +198,7 @@ class machine_learning_classifiers:
 
     def numpy_LDA(self, num_classes, num_features, labels, standardize= True , title = ''):
         '''
+        numpy implementation of LDA
         http://sebastianraschka.com/Articles/2014_python_lda.html
         
             1) d-dimensional mean vectors, (num_classes,num_features)
@@ -313,107 +308,24 @@ class machine_learning_classifiers:
             pyplot.show()
 
         utils.get_confusion_matrix(y_valid,y_pred.reshape(len(y_valid)), labels = confusion_labels, title = confusion_title)
-
-    def test(self):
-   
-
-        #self.x_train, self.y_train = utils.load_dataset(r'C:\Users\kucharskib\Desktop\x_scikit_raw.npy' , r'C:\Users\kucharskib\Desktop\y_scikit_raw.npy')
-        self.x_train, self.y_train = utils.load_dataset(r'x_valid_scikit_raw.npy' , r'y_valid_scikit_raw.npy')
-
-        #self.x_valid, self.y_valid = utils.load_dataset(r'x_valid_scikit_raw.npy' , r'y_valid_scikit_raw.npy')
-        lda = self.scikit_LDA(num_classes = 2, plot = False)
-
-        class0 = lda[self.y_train == 0]
-        class1 = lda[self.y_train == 1]
-
-        '''
-        m1 = np.median(class1)
-        m0 = np.median(class0)
-
-        s1 = np.std(class1)
-        s0 = np.std(class0)
-
-
-        thres = ((s0+m0) + (m1-s1)) / 2
-        '''
-        thres = -0.023
-        class0correct = 0
-        class1correct = 0
-       
-
-        for i in range(len(lda)):
-            if(lda[i] > thres) and (self.y_train[i] == 1):
-                class1correct = class1correct + 1
-            elif(lda[i] < thres) and (self.y_train[i] == 0):
-                class0correct = class0correct + 1
-
-        print('class0 size',class0.shape)
-        print('class1 size ',class1.shape)
-        '''
-        print('class0 median, ', m0)
-        print('class1 median, ', m1)
-
-        print('class0 std, ', s0)
-        print('class1 std, ', m1)
-
-        print('thres', thres)
-        '''
-        print('class0 correct',class0correct)
-        print('class1 correct ',class1correct)
-
-        print('class0 accuracy',(class0correct/len(class0)) * 100)
-        print('class1 accuracy ',(class1correct/len(class1)) * 100)
-
-    def wine_test(self):
-        
-        self.x_train, self.y_train = utils.load_dataset(r'NumpyData\wine\wine.data.txt_x.npy' , r'NumpyData\wine\wine.data.txt_y.npy')
-        self.x_valid, self.y_valid = utils.load_dataset(r'NumpyData\wine\wine.data.txt_x_valid.npy' , r'NumpyData\wine\wine.data.txt_y_valid.npy')
-
-        results, model = self.scikit_LDA(num_classes=3, plot = False)
-
-        predictions = []
-        for input in self.x_valid:
-            prediction = model.predict(input)
-            predictions.append(prediction)
-
-        num_correct = 0
-        for i in range(len(predictions)):
-            if predictions[i] == self.y_valid[i]:
-                num_correct += 1
-            print('Pred: ', predictions[i], 'Actual ', self.y_valid[i])
-        
-        print('Accuracy: ',  num_correct / len(predictions) * 100)
-
-        #self.get_thres(results, 2,3)
-
-    def get_thres(self,lda, num_axis, num_classes):
-        
     
-        classes = []
-        for i in range(num_classes):
-            classes.append(lda[:,0][self.y_train == i])
+    def numpy_neural_net(self,dims, lr, num_iterations):
+        nn = numpy_artificial_neural_network()
 
-        medians = []
-        stds = []
-        for i in range(classes):
-            medians.append(np.medians(classes[i]))
-            stds.append(mp.std(classes[i]))
+        #dims = [12288,7,1]
 
-        thres = ()+() / num_classes
-        
+        #x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
+        #x=np.swapaxes(x,0,1)
+        #y = np.reshape(y,(1,len(y)))
 
-        
-        m1 = np.median(class1)
-        m0 = np.median(class0)
-
-        s1 = np.std(class1)
-        s0 = np.std(class0)
-
-
-        thres = ((s0+m0) + (m1-s1)) / 2
-        
-        
-            
-        
+        nn.fit(
+                X = self.x_train,
+                Y = self.y_train,
+                #X_valid = self.x_valid,
+                #Y_valif = self.y_valid ,
+                layers_dims = dims,
+                learning_rate = lr,
+                num_iterations=num_iterations
+            )
 
         

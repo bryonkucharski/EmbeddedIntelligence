@@ -40,7 +40,7 @@ class numpy_logistic_regression():
         calculates the cost of a single iteration
 
         Arguments:
-            X - input of dimensions (features,size)
+            X - input of dimensions (num of features,size)
             Y - 1D numpy array of true output values
 
         """
@@ -118,9 +118,9 @@ class numpy_logistic_regression():
         Run logistic regression for num_iterations. Calcuates the train and test accuracy
 
         Arguments:
-           x - train input of dimension (features,size)
+           x - train input of dimension (number of features,size)
            y - 1D numpy array of true output values
-           x_test - test input of dimension (feature, size)
+           x_test - test input of dimension (number of features, size)
            y_test - 1D numpy array of true test values
            num_iterations - number of times to run logistic regression
            learning_rate - how fast gradient descent will "learn"
