@@ -51,7 +51,7 @@ class machine_learning_classifiers:
         self.y_valid = None
 
 
-    def KerasDeepModel(self, num_classes, IMG_SIZE,epochs, modelName, saveModel = 'False'):
+    def KerasDeepModel(self, num_classes, IMG_SIZE,epochs, modelName = 'None', saveModel = 'False'):
         
         self.model = utils.Keras_Website_Model(num_classes, IMG_SIZE)
         self.y_train = utils.one_hot(self.y_train, num_classes) 

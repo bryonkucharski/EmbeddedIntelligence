@@ -13,10 +13,10 @@ import numpy as np
 
 classifiers = machine_learning_classifiers()
 
-def runKeras(x,y,x_valid,y_valid,num_classes, IMG_SIZE, epochs,save):
+def runKeras(x,y,x_valid,y_valid,num_classes, IMG_SIZE, epochs):
     
     classifiers.load_dataset(x, y ,x_valid, y_valid)
-    classifiers.KerasDeepModel(num_classes = num_classes, IMG_SIZE = IMG_SIZE, epochs = epochs,'deepmodel_preprocessed.h5', saveModel = save)
+    classifiers.KerasDeepModel(num_classes = num_classes, IMG_SIZE = IMG_SIZE, epochs = epochs)
 
 
 def runSciKit(x,y,x_valid,y_valid):
@@ -158,16 +158,19 @@ runLDA(         dataset_x=r'NumpyData\Wine\wine_x_train.npy',
                 title='Wine LDA (Normalized Data)',
                 labels = ['class 0','class 1', 'class 2'])
 '''
+
+#Should be done on a GPU
 runKeras(
-        x = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy',
-        y = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy',
-        x_valid = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_valid_flattened_50.npy' ,
-        y_valid = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_valid_flattened_50.npy',
+        x = r'NumpyData\Dogscats\3D\dogscats_x_train_raw.npy',
+        y = r'NumpyData\Dogscats\3D\dogscats_y_train_raw.npy',
+        x_valid = r'NumpyData\Dogscats\3D\dogscats_x_valid_raw.npy' ,
+        y_valid = r'NumpyData\Dogscats\3D\dogscats_y_valid_raw.npy',
         num_classes = 2,
-        IMG_SIZE= 50,
+        IMG_SIZE= 224,
         epochs = 30,
-        save = False
+      
         )
+
 '''
 #this did not work too well
 runSciKit(
