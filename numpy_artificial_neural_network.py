@@ -178,3 +178,23 @@ class numpy_artificial_neural_network:
         return self.parameters
 
 
+<<<<<<< HEAD
+
+x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
+x_valid, y_valid = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_valid_flattened_50.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_valid_flattened_50.npy')
+
+x=np.swapaxes(x,0,1)
+y = np.reshape(y,(1,len(y)))
+x_valid=np.swapaxes(x_valid,0,1)
+y_valid = np.reshape(y_valid,(1,len(y_valid)))
+
+nn.fit(
+        X = x,
+        Y = y,
+        X_valid = x_valid,
+        Y_valid = y_valid,
+        layers_dims = dims,
+        learning_rate = 0.009,
+        num_iterations= 1000
+    )
+>>>>>>> f121259b4a4b65b71df1e5be4ddd854a30d2f795
