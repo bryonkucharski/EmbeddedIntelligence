@@ -9,18 +9,14 @@ Fall 2017
 from machine_learning_classifiers import machine_learning_classifiers
 import machine_learning_utils as utils
 import numpy as np
-from skimage import io
-import random
-from matplotlib import pyplot
-import re
+
 
 classifiers = machine_learning_classifiers()
 
-def runKeras(x,y,x_valid,y_valid,save):
+def runKeras(x,y,x_valid,y_valid,num_classes, IMG_SIZE, epochs,save):
     
     classifiers.load_dataset(x, y ,x_valid, y_valid)
-
-    classifiers.KerasDeepModel(30,'dogscats_deepmodel_preprocessed.h5', saveModel = save)
+    classifiers.KerasDeepModel(num_classes = num_classes, IMG_SIZE = IMG_SIZE, epochs = epochs,'deepmodel_preprocessed.h5', saveModel = save)
 
 
 def runSciKit(x,y,x_valid,y_valid):
@@ -166,7 +162,10 @@ runKeras(
         x = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy',
         y = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy',
         x_valid = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_valid_flattened_50.npy' ,
-        y_valid = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_valid_flattened_50.npy'
+        y_valid = r'NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_valid_flattened_50.npy',
+        num_classes = 2,
+        IMG_SIZE= 50,
+        epochs = 30,
         save = False
         )
 '''

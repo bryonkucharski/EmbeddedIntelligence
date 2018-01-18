@@ -51,12 +51,12 @@ class machine_learning_classifiers:
         self.y_valid = None
 
 
-    def KerasDeepModel(self, epochs, modelName, saveModel = 'False'):
+    def KerasDeepModel(self, num_classes, IMG_SIZE,epochs, modelName, saveModel = 'False'):
         
-        self.model = utils.Keras_Website_Model(2, 224)
-        self.y_train = utils.one_hot(self.y_train, 2) 
+        self.model = utils.Keras_Website_Model(num_classes, IMG_SIZE)
+        self.y_train = utils.one_hot(self.y_train, num_classes) 
 
-        self.y_valid = utils.one_hot(self.y_valid, 2)
+        self.y_valid = utils.one_hot(self.y_valid, num_classes)
         self.model.fit(self.x_train, self.y_train, validation_data = (self.x_valid, self.y_valid), epochs=epochs, batch_size=200, verbose=2)
         scores = self.model.evaluate(self.x_valid, self.y_valid, verbose=0)
         if saveModel:
