@@ -396,9 +396,7 @@ def CNN_deepModel(NUM_CLASSES, IMG_SIZE):
 
 
 def Keras_Website_Model(NUM_CLASSES, IMG_SIZE):
-	
-
-	
+    
 	model = Sequential()
     
 	model.add(Conv2D(32, (3, 3), input_shape=(3,IMG_SIZE,IMG_SIZE)))

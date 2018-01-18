@@ -51,7 +51,7 @@ class machine_learning_classifiers:
         self.y_valid = None
 
 
-    def KerasDeepModel(self, epochs, modelName):
+    def KerasDeepModel(self, epochs, modelName, saveModel = 'False'):
         
         self.model = utils.Keras_Website_Model(2, 224)
         self.y_train = utils.one_hot(self.y_train, 2) 
@@ -59,7 +59,8 @@ class machine_learning_classifiers:
         self.y_valid = utils.one_hot(self.y_valid, 2)
         self.model.fit(self.x_train, self.y_train, validation_data = (self.x_valid, self.y_valid), epochs=epochs, batch_size=200, verbose=2)
         scores = self.model.evaluate(self.x_valid, self.y_valid, verbose=0)
-        self.model.save_weights(modelName)
+        if saveModel:
+            self.model.save_weights(modelName)
         print("Baseline Error: %.2f%%" % (100-scores[1]*100))
     
     
@@ -311,18 +312,20 @@ class machine_learning_classifiers:
     
     def numpy_neural_net(self,dims, lr, num_iterations):
         nn = numpy_artificial_neural_network()
+        
+        self.x_train=np.swapaxes(self.x_train,0,1)
+        self.y_train = np.reshape(self.y_train,(1,len(self.y_train)))
 
-        #dims = [12288,7,1]
+        
+        self.x_valid = np.swapaxes(self.x_valid,0,1)
+        self.y_valid = np.reshape(self.y_valid,(1,len(self.y_valid)))
 
-        #x,y = utils.load_dataset('NumpyData\Dogscats\Flattened\Subset 200\dogscats_x_train_flattened_200.npy','NumpyData\Dogscats\Flattened\Subset 200\dogscats_y_train_flattened_200.npy')
-        #x=np.swapaxes(x,0,1)
-        #y = np.reshape(y,(1,len(y)))
 
         nn.fit(
                 X = self.x_train,
                 Y = self.y_train,
-                #X_valid = self.x_valid,
-                #Y_valif = self.y_valid ,
+                X_valid = self.x_valid,
+                Y_valid = self.y_valid ,
                 layers_dims = dims,
                 learning_rate = lr,
                 num_iterations=num_iterations
