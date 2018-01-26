@@ -18,7 +18,11 @@ class numpy_artificial_neural_network:
         self.A_cache = {}
         self.Z_cache = {}
         self.grads = {}
-    
+
+    def softmax(self, x):
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum(axis=0) 
+
     def sigmoid(self, z):
         return 1/(1+(np.exp(-z)))
     
@@ -59,6 +63,8 @@ class numpy_artificial_neural_network:
             A = self.relu(Z)
         elif activation == 'sigmoid':
             A = self.sigmoid(Z)
+        elif activation == 'softmax':
+            A = self.softmax(Z)
 
         assert(Z.shape == (W.shape[0], X.shape[1]))
 
@@ -115,7 +121,7 @@ class numpy_artificial_neural_network:
 
         return cost
 
-    def calculate_SGD(self,derZ, A_previous, W,m, l ):
+    def calculate_backprop(self,derZ, A_previous, W,m, l ):
         
         '''
         print('SGD input')
@@ -161,14 +167,10 @@ class numpy_artificial_neural_network:
 
         #last layer sigmoid derivative
         dZ = dY_hat * self.sigmoid_derivative(Z) # element wise multiplication 
-        '''
-        dW = np.dot(dZ, A_prev.T) / m
-        db = np.squeeze(np.sum(dZ, axis=1, keepdims=True)) / m
-        dA_prev = np.dot(W.T, dZ)
-        '''
+
         #print('backward prop SGD for output layer')
         A_prev = self.A_cache['A' + str(L-1)]
-        dA_prev, dW, db = self.calculate_SGD(derZ = dZ, A_previous = A_prev, W = W,m = m, l = L)
+        dA_prev, dW, db = self.calculate_backprop(derZ = dZ, A_previous = A_prev, W = W,m = m, l = L)
 
         self.grads.update({'dW' + str(L):  dW })
         self.grads.update({'db' + str(L):  db })
@@ -184,13 +186,8 @@ class numpy_artificial_neural_network:
 
             dZ = dA_prev * self.relu_derivative(Z) # element wise multiplication 
             #print('backward prop SGD for hidden layer')
-            dA_prev, dW, db = self.calculate_SGD(derZ = dZ, A_previous = A_prev, W = W,m = m, l = l)
+            dA_prev, dW, db = self.calculate_backprop(derZ = dZ, A_previous = A_prev, W = W,m = m, l = l)
 
-            '''
-            dW = np.dot(dZ, A_prev.T) / m
-            db = np.squeeze(np.sum(dZ, axis=1, keepdims=True)) / m
-            dA_prev = np.dot(W.T, dZ)
-            '''
             self.grads.update({'dW' + str(l):  dW })
             self.grads.update({'db' + str(l):  db })
             
@@ -201,6 +198,7 @@ class numpy_artificial_neural_network:
 
             self.parameters["W" + str(l)] = self.parameters["W" + str(l)] - learning_rate * self.grads["dW" + str(l)]
             self.parameters["b" + str(l)] = self.parameters["b" + str(l)] - learning_rate * self.grads["db" + str(l)]
+
             
 
     def fit(self,X,Y, X_valid, Y_valid, layers_dims, learning_rate=0.0075, num_iterations=3000):
@@ -217,7 +215,7 @@ class numpy_artificial_neural_network:
 
             self.update(learning_rate)
         
-            if i % 100 == 0:
+            if i % (num_iterations/10) == 0:
                         #costs.append(self.parameters['cost'])
                         #iterations.append(i)
                         print ('cost on ', i ,': ', cost)

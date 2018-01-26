@@ -54,13 +54,17 @@ class machine_learning_classifiers:
     def KerasDeepModel(self, num_classes, IMG_SIZE,epochs, modelName = 'None', saveModel = 'False'):
         
         self.model = utils.Keras_Website_Model(num_classes, IMG_SIZE)
-        self.y_train = utils.one_hot(self.y_train, num_classes) 
 
+        self.y_train = utils.one_hot(self.y_train, num_classes) 
         self.y_valid = utils.one_hot(self.y_valid, num_classes)
+
         self.model.fit(self.x_train, self.y_train, validation_data = (self.x_valid, self.y_valid), epochs=epochs, batch_size=200, verbose=2)
+
         scores = self.model.evaluate(self.x_valid, self.y_valid, verbose=0)
+
         if saveModel:
             self.model.save_weights(modelName)
+
         print("Baseline Error: %.2f%%" % (100-scores[1]*100))
     
     
@@ -80,7 +84,7 @@ class machine_learning_classifiers:
 
         x_std = self.x_train
         x_valid_std = self.x_valid
-        tbCallBack = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
+        #tbCallBack = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
 
         self.model = utils.custom_Deep_Model(input_size, num_layers, num_hidden_units,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate)
         
@@ -88,7 +92,7 @@ class machine_learning_classifiers:
         self.y_train = utils.one_hot(self.y_train, num_outputs) 
         self.y_valid = utils.one_hot(self.y_valid, num_outputs)
             
-        self.model.fit(x_std, self.y_train,validation_data = (x_valid_std, self.y_valid), epochs=epochs, batch_size=batch_size,  callbacks=[tbCallBack])
+        self.model.fit(x_std, self.y_train,validation_data = (x_valid_std, self.y_valid), epochs=epochs, batch_size=batch_size) #,callbacks=[tbCallBack])
         scores = self.model.evaluate(self.x_valid, self.y_valid)
         print("Baseline Error: %.2f%%" % (100-scores[1]*100))
         return scores
@@ -182,19 +186,21 @@ class machine_learning_classifiers:
         '''
         model = sklearnPCA(n_components=n_components)
         pca = model.fit_transform(self.x_train)
+        acc = model.score(self.x_valid, self.y_valid)
+        print("PCA Accuracy: {:.2f}%".format(acc * 100))
         utils.plotPCA(pca,self.y_train, n_components,labels, title = title)
         return pca
 
-    def scikit_LDA(self, num_classes,labels, plot = True,predict_image='None'):
+    def scikit_LDA(self, num_classes,labels, plot = True,predict_image='None', title = ''):
         '''
         scikit implementation of LDA
         '''
         model = LinearDiscriminantAnalysis()
         lda = model.fit_transform(self.x_train,self.y_train)
-        #acc = model.score(self.x_valid, self.y_valid)
-       # print("LDA Accuracy: {:.2f}%".format(acc * 100))
+        acc = model.score(self.x_valid, self.y_valid)
+        print("LDA Accuracy: {:.2f}%".format(acc * 100))
         if plot:
-            utils.plotPCA(lda,self.y_train, num_classes-1, labels)
+            utils.plotPCA(lda,self.y_train, num_classes-1, labels, title = title)
         return lda, model
 
     def numpy_LDA(self, num_classes, num_features, labels, standardize= True , title = ''):
@@ -281,7 +287,7 @@ class machine_learning_classifiers:
         #5) Transform data
         lda = (x_std.dot(W)) *-1  #-1 to match scikit output
      
-        utils.plotPCA(lda,self.y_train, 0,labels, title = title, xlabel = 'Linear Discriminant 1', ylabel = 'Linear Discriminant 2')
+        utils.plotPCA(lda,self.y_train, num_classes-1 ,labels, title = title, xlabel = 'Linear Discriminant 1', ylabel = 'Linear Discriminant 2')
     
         return lda
 

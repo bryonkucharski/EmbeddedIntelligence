@@ -530,7 +530,8 @@ def plotPCA(x, y, dimensions,labels,xlabel = '', ylabel = '', title = ''):
         color = clrs[int(y[i])]
         
         if(dimensions == 1):
-            pyplot.plot(x[i],0,marker='+', ms = 1, alpha=1, color=color)
+            #pyplot.plot(x[i],0,marker='o', ms = 5, alpha=1, color=color)
+            pyplot.plot(x[i][0],i, marker='o', ms = 5, alpha=1, color=color)
         elif(dimensions == 2):
             pyplot.plot(x[i][0],x[i][1], marker='o', ms = 5, alpha=1, color=color)
         elif(dimensions == 0): #used if wanting to plot 1D pca/lda in 2D
@@ -606,7 +607,7 @@ def plot_confusion_matrix(cm, classes,
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         print("Normalized confusion matrix")
     else:
-        print('Confusion matrix, without normalization')
+        print('Confusion matrix')
 
     print(cm)
 
@@ -683,3 +684,8 @@ def draw_nn(size, save_name):
     draw_neural_net(ax, .1, .9, .1, .9, size)
     fig.savefig(save_name)
 
+#this was ran on the GPU to parse the 3D images
+#stardardizes produces mean = 0, std = 2.2
+#unstandardized = mean = 114, std = 66
+#parse_image_data(r'dogscats/train', 'jpg', 'x_train_dogscats_flattened', 'y_train_dogscats_flattened',64, modelType = 'scikit', standardize = True)
+#parse_image_data(r'dogscats/valid', 'jpg', 'x_valid_dogscats_flattened', 'y_valid_dogscats_flattened',64, modelType = 'scikit', standardize = True)
