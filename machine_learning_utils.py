@@ -28,6 +28,7 @@ import matplotlib.patches as mpatches
 import random
 from sklearn.metrics import confusion_matrix
 import itertools
+import matplotlib.lines as mlines
 
 #https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
 
@@ -324,9 +325,8 @@ def one_hot(y,NUM_CLASSES):
     Returns:
         one hot array of input data
     """
-
-    y = np.eye(NUM_CLASSES, dtype='uint8')[y]
-    return y
+   
+    y = np.eye(NUM_CLASSES, dtype='uint8')
 
 def reverse_one_hot(one_hot_array):
     """
@@ -441,16 +441,17 @@ def custom_Deep_Model(input_size, num_layers, num_hidden_units,num_outputs,outpu
     if optimizer == 'adam':
         opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.05)
         #can add other Keras optimizers here
-
-    model.add(Dense(num_hidden_units,input_shape = input_size, activation = hidden_activation))
-
+    
     for i in range(num_layers):
-        model.add(Dense(num_hidden_units,activation = hidden_activation ))
+        if (i == 0): #input layer
+            model.add(Dense(num_hidden_units[i],input_shape = input_size, activation = hidden_activation))
+        else:
+            model.add(Dense(num_hidden_units[i],activation = hidden_activation ))
 
     model.add(Dense(num_outputs, activation = output_activation))
 
     model.compile(loss=loss,optimizer=opt, metrics=['accuracy'])
-    
+    print(model.summary())
     return model
 
 def custom_CNN_Model(input_size, num_layers,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate, filter_size, kernal_size, pooling_size):
@@ -526,24 +527,29 @@ def plotPCA(x, y, dimensions,labels,xlabel = '', ylabel = '', title = ''):
     print('Plotting ',num_classes, ' classes in ', dimensions, ' dimensions')
 
     clrs = ['y','b','r', 'g', 'c','m','k','w']
+    markers =  ['o','x','*', '+', '^'] 
     for i in range(len(x)):
         color = clrs[int(y[i])]
+
+        marker = markers[int(y[i])]
         
         if(dimensions == 1):
             #pyplot.plot(x[i],0,marker='o', ms = 5, alpha=1, color=color)
-            pyplot.plot(x[i][0],i, marker='o', ms = 5, alpha=1, color=color)
+            pyplot.plot(x[i][0],i, marker=marker, ms = 5, alpha=1, color=color)
         elif(dimensions == 2):
-            pyplot.plot(x[i][0],x[i][1], marker='o', ms = 5, alpha=1, color=color)
+            pyplot.plot(x[i][0],x[i][1], marker=marker, ms = 5, alpha=1, color=color)
         elif(dimensions == 0): #used if wanting to plot 1D pca/lda in 2D
-            pyplot.plot(x[i][0],i, marker='o', ms = 5, alpha=1, color=color)
+            pyplot.plot(x[i][0],i, marker=marker, ms = 5, alpha=1, color=color)
 
-    patches = []
-    
+    #patches = []
+    mlines_all = []
+
     for i in range(0,num_classes):
-        patches.append(mpatches.Patch(color=clrs[i], label=labels[i]))
+        #patches.append(mpatches.Patch(color=clrs[i], label=labels[i], hatch = marker))
+        mlines_all.append(mlines.Line2D([], [], color=clrs[i], marker=markers[i], markersize=15, label=labels[i]))
  
     
-    pyplot.legend(handles=patches, bbox_to_anchor=(1, 1), bbox_transform=pyplot.gcf().transFigure)
+    pyplot.legend(handles=mlines_all, bbox_to_anchor=(1, 1), bbox_transform=pyplot.gcf().transFigure)
     pyplot.title(title)
     pyplot.xlabel(xlabel)
     pyplot.ylabel(ylabel)

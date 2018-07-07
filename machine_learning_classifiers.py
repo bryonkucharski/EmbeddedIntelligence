@@ -20,7 +20,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA as sklearnPCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from matplotlib import pyplot
+from keras.utils.np_utils import to_categorical
 np.set_printoptions(threshold=np.nan)
+
+from keras.models import load_model
+
 
 
 class machine_learning_classifiers:
@@ -50,6 +54,13 @@ class machine_learning_classifiers:
         self.x_valid = None
         self.y_valid = None
 
+    def load_model(self,path):
+        self.model = load_model(path)
+        return self.model
+
+    def predict_model(self, x):
+        pred = self.model.predict(np.array([x]))
+        return pred
 
     def KerasDeepModel(self, num_classes, IMG_SIZE,epochs, modelName = 'None', saveModel = 'False'):
         
@@ -77,7 +88,7 @@ class machine_learning_classifiers:
         self.model.save_weights(modelName)
         print("Baseline Error: %.2f%%" % (100-scores[1]*100))
 
-    def CustomDeepModel(self,input_size,num_layers, num_hidden_units,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate,epochs, batch_size):
+    def CustomDeepModel(self,input_size,num_layers, num_hidden_units,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate,epochs, batch_size, save_model = False, model_name = ''):
         '''
         Assumes data is already preprocessed with mean = 0 and std = 1
         '''
@@ -89,13 +100,19 @@ class machine_learning_classifiers:
         self.model = utils.custom_Deep_Model(input_size, num_layers, num_hidden_units,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate)
         
 
-        self.y_train = utils.one_hot(self.y_train, num_outputs) 
-        self.y_valid = utils.one_hot(self.y_valid, num_outputs)
-            
+       # self.y_train = utils.one_hot(self.y_train, num_outputs) 
+       # self.y_valid = utils.one_hot(self.y_valid, num_outputs)
+        #self.y_train = to_categorical(self.y_train, num_outputs)
+        #self.y_valid = to_categorical(self.y_valid, num_outputs)
         self.model.fit(x_std, self.y_train,validation_data = (x_valid_std, self.y_valid), epochs=epochs, batch_size=batch_size) #,callbacks=[tbCallBack])
         scores = self.model.evaluate(self.x_valid, self.y_valid)
+
+        if save_model:
+            self.model.save(model_name)
+
+
         print("Baseline Error: %.2f%%" % (100-scores[1]*100))
-        return scores
+        return scores, self.model
 
     def CustomCNNModel(self,input_size, num_layers,num_outputs,output_activation,hidden_activation, loss, optimizer,learning_rate,epochs,batch_size, filter_size, kernal_size, pooling_size):
         '''
@@ -116,7 +133,18 @@ class machine_learning_classifiers:
         print(self.model.summary())
 
         print("Baseline Error: %.2f%%" % (100-scores[1]*100))
-        
+
+    def XGBoost(self):
+        # fit model no training data
+        model = XGBClassifier()
+        model.fit(self.x_train, self.y_train)
+        # make predictions for test data
+        y_pred = model.predict(self.x_valid)
+
+        predictions = [round(value) for value in self.y_valid]
+        # evaluate predictions
+        accuracy = accuracy_score(self.y_valid, predictions)
+        print("Accuracy: %.2f%%" % (accuracy * 100.0))  
     def LinearSVM(self):
 
         model = LinearSVC()

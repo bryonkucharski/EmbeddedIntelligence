@@ -318,32 +318,31 @@ runKeras(   x = x_train_dogcat_3D,
 #lr for breast cancer = 0.05
 #lr for wine = .0003
 runNumpyLogisticRegression(
-                            x = x_train_dogcat_flat_sub,
-                            y = y_train_dogcat_flat_sub,
-                            x_valid = x_valid_dogcat_flat_sub,
-                            y_valid = y_valid_dogcat_flat_sub,
+                            x=x_train_breast_cancer,
+                            y= y_train_breast_cancer,
+                            x_valid = x_valid_breast_cancer,
+                            y_valid = y_valid_breast_cancer,
                             num_iterations = 2000, 
                             learning_rate = .005,
-                            title = 'Dogscats Confusion Matrix',
-                            labels = ['0','1'])
+                            title = 'Breast Cancer Confusion Matrix',
+                            labels = ['benign','malignant'])
 
-classifiers.load_dataset(x_train_dogcat_flat_sub,y_train_dogcat_flat_sub,x_valid_dogcat_flat_sub,y_valid_dogcat_flat_sub)
-classifiers.LogisticRegression()
+#classifiers.load_dataset(x_train_dogcat_flat_sub,y_train_dogcat_flat_sub,x_valid_dogcat_flat_sub,y_valid_dogcat_flat_sub)
+#classifiers.LogisticRegression()
 '''
-
+'''
 runPCA(
-        dataset_x=x_train_dogcat_flat_sub,
-        dataset_y= y_train_dogcat_flat_sub,
-        dataset_x_valid = x_valid_dogcat_flat_sub,
-        dataset_y_valid = y_valid_dogcat_flat_sub,
+        dataset_x=x_train_breast_cancer,
+        dataset_y= y_train_breast_cancer,
+        dataset_x_valid = x_valid_breast_cancer,
+        dataset_y_valid = y_valid_breast_cancer,
         parseData = False,
         standardize = False, 
         type = 'numpy',
         n_components = 2,
-        title = 'Dog vs Cat PCA (Normalized Data)',
-        labels = ['Cat','Dog'])
-
-
+        title = 'Breast Cancer PCA (Normalized Data)',
+        labels = ['benign','malignant'])
+'''
 '''
 runLDA(         dataset_x=x_train_breast_cancer,
                 dataset_y= y_train_breast_cancer,
@@ -368,18 +367,18 @@ runPCA( dataset_x= x_train_wine,
         title = 'Wine PCA (Normalized Data)',
         labels = ['class 0','class 1', 'class 2'])
 '''
-'''
-runLDA(         dataset_x=x_train_dogcat_flat_sub,
-                dataset_y= y_train_dogcat_flat_sub,
-                dataset_x_valid = x_valid_dogcat_flat_sub,
-                dataset_y_valid = y_valid_dogcat_flat_sub,
-                standardize = True,
+
+runLDA(         dataset_x= x_train_wine,
+                dataset_y= y_train_wine,
+                dataset_x_valid = x_valid_wine,
+                dataset_y_valid = y_valid_wine,
+                standardize = False,
                 type = 'numpy', 
-                num_classes=2,
-                num_features=12288,
+                num_classes=3,
+                num_features=13,
                 title='Wine LDA (Normalized Data)',
                 labels = ['class 0','class 1', 'class 2'])
-'''
+
 
 
 #for pima indians
